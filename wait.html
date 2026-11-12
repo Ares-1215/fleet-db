@@ -120,6 +120,7 @@ ul.plain li{margin:3px 0}
   <button role="tab" data-t="ov" aria-selected="true">總覽</button>
   <button role="tab" data-t="tl" aria-selected="false">站所時間軸</button>
   <button role="tab" data-t="hm" aria-selected="false">站所 × 時段</button>
+  <button role="tab" data-t="rp" aria-selected="false">固定空窗</button>
   <button role="tab" data-t="dt" aria-selected="false">明細</button>
   <button role="tab" data-t="def" aria-selected="false">口徑說明</button>
 </nav>
@@ -177,6 +178,18 @@ ul.plain li{margin:3px 0}
   <div class="tblwrap"><table id="hmTable"></table></div>
 </section>
 
+<section id="rp" hidden>
+  <h2>固定空窗</h2>
+  <p class="note" id="rpNote"></p>
+  <div class="filters">
+    <select id="rpShare" aria-label="出現比例"><option value="70" selected>七成以上的平日都出現</option><option value="50">五成以上的平日都出現</option><option value="90">九成以上的平日都出現</option></select>
+    <select id="rpSt" aria-label="站所"></select>
+    <button class="btn" id="rpCsv">下載 CSV</button>
+    <span class="count" id="rpCount"></span>
+  </div>
+  <div class="tblwrap" style="max-height:70vh;overflow:auto"><table id="rpTable"></table></div>
+</section>
+
 <section id="dt" hidden>
   <h2>明細</h2>
   <div class="filters">
@@ -219,7 +232,7 @@ const P = D.plans.map(s => ({ di: s[0], slot: s[1], st: s[2], a: s[3], b: s[4], 
 let TH = 60;
 
 /* ---------- tabs ---------- */
-const TABS = ['ov', 'tl', 'hm', 'dt', 'def'];
+const TABS = ['ov', 'tl', 'hm', 'rp', 'dt', 'def'];
 function showTab(t) { document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-selected', x.dataset.t === t)); TABS.forEach(id => $('#' + id).hidden = id !== t); if (t === 'tl') drawTimeline(); }
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => showTab(b.dataset.t));
 
@@ -358,6 +371,32 @@ function drawHeat() {
 }
 $('#hmSrc').oninput = drawHeat;
 
+/* ---------- 固定空窗：同一台車頭在同一站，多數平日都等超過門檻 ---------- */
+let rpRows = [];
+const rpCols = [
+  { t: '車頭', v: x => slotName(x.slot) }, { t: '類型', v: x => KIND[(D.slots[x.slot] || [])[2] || ''] }, { t: '組別', v: x => (D.slots[x.slot] || [])[1] || '' },
+  { t: '站所', v: x => stName(x.st) }, { t: '出現晚數', n: 1, v: x => x.days.size + ' / ' + N }, { t: '每晚次數', n: 1, v: x => r1(x.n / x.days.size) }, { t: '平均進站', v: x => hm(x.a / x.n) }, { t: '平均離站', v: x => hm(x.b / x.n) },
+  { t: '平均等待（分）', n: 1, v: x => Math.round(x.m / x.n) }, { t: '每晚等待時數', n: 1, v: x => r1(x.m / 60 / N) },
+];
+function drawRepeat() {
+  const share = +$('#rpShare').value, o = {};
+  for (const s of A) { if (!useIdx.has(s.di) || s.min < TH) continue; const k = s.slot + '|' + s.st; const x = o[k] = o[k] || { slot: s.slot, st: s.st, days: new Set(), m: 0, n: 0, a: 0, b: 0, last: -1 }; x.days.add(s.di); x.m += s.min; x.n++; x.a += s.a; x.b += s.b; x.last = Math.max(x.last, s.di); }
+  const all = Object.values(o).filter(x => x.days.size >= N * share / 100).sort((x, y) => y.m / y.n - x.m / x.n);
+  const cnt = {}; all.forEach(x => cnt[x.st] = (cnt[x.st] || 0) + 1);
+  const cur = $('#rpSt').value;
+  $('#rpSt').innerHTML = '<option value="">全部站所</option>' + Object.entries(cnt).sort((a, b) => b[1] - a[1]).map(([c, k]) => `<option value="${c}">${esc(stName(c))}（${k} 組）</option>`).join('');
+  if (cnt[cur]) $('#rpSt').value = cur;
+  rpRows = all.filter(x => !$('#rpSt').value || x.st === $('#rpSt').value);
+  const hrs = all.reduce((s, x) => s + x.m, 0) / 60 / N, tot = A.filter(s => useIdx.has(s.di) && s.min >= TH).reduce((s, x) => s + x.min, 0) / 60 / N;
+  $('#rpNote').textContent = `同一台車頭、在同一站，${N} 個常態平日裡有 ${share}% 以上的晚上都等了 ${TH} 分以上：共 ${all.length} 組，合計每晚約 ${r1(hrs)} 小時，占全部等待的 ${Math.round(hrs / (tot || 1) * 100)}%。這些空窗最固定，最容易事先排進加班車或調整班表。點任一列可以看那一站最近一晚的時間軸。`;
+  $('#rpCount').textContent = `${fmt(rpRows.length)} 組`;
+  table($('#rpTable'), rpCols, rpRows.map(x => rpCols.map(c => esc(c.v(x)))), i => `class="go" tabindex="0" data-st="${rpRows[i].st}" data-di="${rpRows[i].last}"`);
+}
+$('#rpShare').oninput = drawRepeat; $('#rpSt').oninput = drawRepeat;
+$('#rpTable').addEventListener('click', e => { const tr = e.target.closest('tr.go'); if (tr) { $('#tlSt').value = tr.dataset.st; $('#tlDate').value = tr.dataset.di; showTab('tl'); scrollTo(0, 0); } });
+$('#rpTable').addEventListener('keydown', e => { if (e.key === 'Enter') { const tr = e.target.closest('tr.go'); if (tr) tr.click(); } });
+$('#rpCsv').onclick = () => { const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"'; const body = [rpCols.map(c => q(c.t)).join(',')].concat(rpRows.map(r => rpCols.map(c => q(c.v(r))).join(','))).join('\r\n'); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + body], { type: 'text/csv' })); a.download = '固定空窗.csv'; a.click(); URL.revokeObjectURL(a.href); };
+
 /* ---------- 明細 ---------- */
 $('#dtDate').innerHTML = '<option value="">全部日期</option>' + D.dates.map((d, i) => `<option value="${i}">${dLabel(d)}</option>`).reverse().join('');
 $('#dtDate').value = String(D.dates.length - 1);
@@ -403,7 +442,7 @@ $('#defBody').innerHTML = `<ul class="plain">
 </ul>`;
 
 /* ---------- 啟動 ---------- */
-function redraw() { fillStations(); drawOverview(); drawHeat(); drawDetail(); if (!$('#tl').hidden) drawTimeline(); }
+function redraw() { fillStations(); drawOverview(); drawHeat(); drawRepeat(); drawDetail(); if (!$('#tl').hidden) drawTimeline(); }
 $('#th').oninput = e => { TH = +e.target.value; redraw(); };
 $('#tlDate').value = String([...useIdx].pop() ?? D.dates.length - 1);
 redraw();
