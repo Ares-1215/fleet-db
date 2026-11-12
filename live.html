@@ -230,7 +230,8 @@ function render(d) {
     ['fFrom', 'fTo'].forEach(id => $('#' + id).addEventListener('input', () => { pendSel = ''; document.querySelectorAll('#pend .chip').forEach(x => x.setAttribute('aria-pressed', 'false')); draw(); }));
     setInterval(stamp, 30000);
   }
-  stamp(); draw();
+  try { stamp(); draw(); }
+  catch (e) { console.error(e); note = '（這一份資料有問題，畫面可能不完整，請通知管理者）'; try { stamp(); } catch (e2) {} }
 }
 
 /* ---------- 啟動：本機版直接用內嵌資料；線上版先驗通行碼再向後端取資料，之後每 2 分鐘看有沒有新的 ---------- */
