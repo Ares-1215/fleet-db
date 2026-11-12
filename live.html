@@ -129,7 +129,18 @@ const SPEED = 55;                                   // 估算空車移動時間�
 const STALE_MIN = 25;                               // 資料超過這麼久沒更新就提醒
 let D = null, wired = false, pendSel = '', note = '';
 const who = t => `<span class="big">${esc(t.id)}</span> ${esc(t.name)}`;
-const km = (a, b) => a === b ? 0 : (D.dist[a + '|' + b] ?? D.dist[b + '|' + a] ?? null);
+// 站間公里：有班次里程就用里程；沒有就估（一東一西或有一端沒有位置 → 用班次串起來的路徑；其餘 → 直線距離 × 繞路係數）
+const hav = (p, q) => { const R = 6371, r = x => x * Math.PI / 180, dLa = r(q[0] - p[0]), dLo = r(q[1] - p[1]); const h = Math.sin(dLa / 2) ** 2 + Math.cos(r(p[0])) * Math.cos(r(q[0])) * Math.sin(dLo / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); };
+function kmx(a, b) {
+  if (a === b) return { k: 0, e: false };
+  const key = a < b ? a + '|' + b : b + '|' + a;
+  if (D.dist[key] != null) return { k: D.dist[key], e: false };
+  if (D.est && D.est[key] != null) return { k: D.est[key], e: true };
+  const p = D.xy && D.xy[a], q = D.xy && D.xy[b]; if (!p || !q) return null;
+  const h = hav(p, q); return { k: Math.max(1, Math.round(h * D.fac.find(x => h < x[0])[1])), e: true };
+}
+const km = (a, b) => { const x = kmx(a, b); return x ? x.k : null; };
+const kmText = (a, b) => { const x = kmx(a, b); return x == null ? '' : (x.e ? '約 ' : '') + x.k + ' 公里'; };
 const table = (host, heads, rows, emptyText) => { host.innerHTML = rows.length ? '<thead><tr>' + heads.map(h => `<th class="${h.n ? 'n' : ''}">${esc(h.t)}</th>`).join('') + '</tr></thead><tbody>' + rows.map(r => '<tr>' + r.map((c, i) => `<td class="${heads[i].n ? 'n' : ''}">${c}</td>`).join('') + '</tr>').join('') + '</tbody>' : `<tbody><tr><td class="empty">${esc(emptyText)}</td></tr></tbody>`; };
 // 換資料時保留下拉選單原本選的值
 const fill = (sel, html) => { const v = sel.value; sel.innerHTML = html; if ([...sel.options].some(o => o.value === v)) sel.value = v; };
@@ -183,13 +194,13 @@ function draw() {
       const win = until == null ? null : until - ready;
       if (win != null && win < 20) continue;
       const verdict = need == null ? '' : win == null || win >= need ? '夠' : win >= need - 20 ? '有點趕' : '不夠';
-      C.push({ t, k, ready, atName, until, win, verdict });
+      C.push({ t, k, e: k > 0 && t.st !== 'road' && kmx(t.at, from).e, ready, atName, until, win, verdict });
     }
     const rank = { '夠': 0, '': 0, '有點趕': 1, '不夠': 2 };
     C.sort((a, b) => rank[a.verdict] - rank[b.verdict] || a.k - b.k || (b.t.waited ?? 0) - (a.t.waited ?? 0));
-    $('#fNote').textContent = (to ? (leg != null ? `這一趟約 ${leg} 公里` : '這兩站之間的公里數沒有資料') + '；' : '') + `找到 ${C.length} 台`;
+    $('#fNote').textContent = (to ? (leg != null ? `這一趟${kmText(from, to)}` : '這兩站之間的公里數沒有資料') + '；' : '') + `找到 ${C.length} 台` + (C.some(x => x.e) ? '（「約」是估算的公里數）' : '');
     table($('#cand'), [{ t: '車頭' }, { t: '司機' }, { t: '現在在' }, { t: '空車過來', n: 1 }, { t: '最快幾點到' }, { t: '可以用到' }, { t: to ? '夠不夠跑' : '已停', n: !to }],
-      C.slice(0, 12).map(x => [who(x.t), esc(x.t.drv), esc(x.atName), x.k ? `${x.k} 公里` : '<span class="tag">就在這站</span>', hm(x.ready), x.until == null ? '今晚沒班了' : `${hm(x.until)} <span class="sub2">${esc(x.t.next.name)}</span>`, to ? (x.verdict ? `<span class="tag ${x.verdict === '夠' ? '' : 'w'}">${x.verdict}</span>` : '—') : dur(x.t.waited)]),
+      C.slice(0, 12).map(x => [who(x.t), esc(x.t.drv), esc(x.atName), x.k ? `${x.e ? '約 ' : ''}${x.k} 公里` : '<span class="tag">就在這站</span>', hm(x.ready), x.until == null ? '今晚沒班了' : `${hm(x.until)} <span class="sub2">${esc(x.t.next.name)}</span>`, to ? (x.verdict ? `<span class="tag ${x.verdict === '夠' ? '' : 'w'}">${x.verdict}</span>` : '—') : dur(x.t.waited)]),
       '附近沒有空檔夠的車頭。');
   }
 
@@ -208,7 +219,7 @@ function render(d) {
   D = d;
   const groups = [...new Set(D.tractors.map(t => t.grp).filter(Boolean))];
   fill($('#grp'), '<option value="">全部</option>' + groups.map(g => `<option>${esc(g)}</option>`).join(''));
-  const stations = Object.entries(D.stName).sort((a, b) => a[1].localeCompare(b[1], 'zh-Hant'));
+  const stations = Object.entries(D.stName).filter(x => x[0]).map(([c, n]) => [c, n || c]).sort((a, b) => a[1].localeCompare(b[1], 'zh-Hant'));
   fill($('#fFrom'), '<option value="">選出發站</option>' + stations.map(([c, n]) => `<option value="${c}">${esc(n)}</option>`).join(''));
   fill($('#fTo'), '<option value="">（不指定）</option>' + stations.map(([c, n]) => `<option value="${c}">${esc(n)}</option>`).join(''));
   $('#pend').innerHTML = D.pend.length ? D.pend.map((p, i) => `<button class="chip" data-i="${i}" aria-pressed="${pendSel === p.no + '|' + p.box}" title="櫃號 ${esc(p.box)}${p.seal ? '，封櫃 ' + esc(p.seal) : ''}">${esc(p.name)}　${esc(p.fromName)}→${esc(p.toName)}</button>`).join('') : '<span class="sub2">目前沒有還沒派車的加班。</span>';
