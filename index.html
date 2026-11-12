@@ -299,7 +299,7 @@ const meter = p => p == null ? '<span class="sub2">—</span>' : `<span class="m
 function dwCells(a) { const mx = Math.max(...a, 1); return '<span class="dw" title="' + a.map((v, i) => '週' + WD[i] + ' ' + v + ' 天').join('、') + '">' + a.map(v => { const l = v === 0 ? 0 : Math.max(1, Math.ceil(v / mx * 5)); return `<i class="${l ? 'l' + l : ''}"></i>`; }).join('') + '</span>'; }
 
 /* ---------- header ---------- */
-$('#hdr').innerHTML = `資料：報表平台「行駛日報明細」 ${T.from} ～ ${T.to}（${fmt(T.days)} 天、${fmt(T.rows)} 筆） · 產生時間 ${T.built} · 內部資料，含司機姓名，請勿外傳 · <a href="wait.html">等待時間軸</a>`;
+$('#hdr').innerHTML = `資料：報表平台「行駛日報明細」 ${T.from} ～ ${T.to}（${fmt(T.days)} 天、${fmt(T.rows)} 筆） · 產生時間 ${T.built} · 內部資料，含司機姓名，請勿外傳 · <a href="wait.html">等待時間軸</a> · <a href="live.html">即時看板</a>`;
 
 /* ---------- 總覽 ---------- */
 const TR = D.trend, chg = (a, b) => (b >= a ? '多 ' : '少 ') + Math.abs(Math.round((b - a) / a * 1000) / 10) + '%';

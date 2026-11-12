@@ -427,7 +427,7 @@ $('#dtQ').oninput = drawDetail; $('#dtDate').oninput = drawDetail;
 $('#dtCsv').onclick = () => { const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"'; const body = [dCols.map(c => q(c.t)).join(',')].concat(dRows.map(r => dCols.map(c => q(c.v(r))).join(','))).join('\r\n'); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + body], { type: 'text/csv' })); a.download = '等待明細.csv'; a.click(); URL.revokeObjectURL(a.href); };
 
 /* ---------- 口徑 ---------- */
-$('#hdr').innerHTML = `資料：報表平台「車頭進離站紀錄」＋「運行表車頭空檔」 ${M.from} ～ ${M.to}（${M.nights} 晚） · 產生時間 ${M.built} · 內部資料，含司機姓名，請勿外傳 · <a href="./">車頭資源庫</a>`;
+$('#hdr').innerHTML = `資料：報表平台「車頭進離站紀錄」＋「運行表車頭空檔」 ${M.from} ～ ${M.to}（${M.nights} 晚） · 產生時間 ${M.built} · 內部資料，含司機姓名，請勿外傳 · <a href="./">車頭資源庫</a> · <a href="live.html">即時看板</a>`;
 $('#scopeNote').textContent = normalIdx.size ? `平均值以 ${N} 個常態平日計算` : `這段期間沒有常態平日，平均值以全部 ${N} 晚計算`;
 $('#defBody').innerHTML = `<ul class="plain">
 <li><b>實際</b>：HCT 報表查詢平台「【運務】車頭進離站紀錄查詢」，進站多為電子圍籬、離站多為司機 APP。這段期間共查 ${fmt(Q.tractors)} 台次，取得 ${fmt(Q.events)} 筆事件（電子圍籬 ${fmt(Q.fence)}、APP ${fmt(Q.app)}、異常回報 ${fmt(Q.abn)}）；${fmt(Q.noEvents)} 台次沒有任何紀錄。</li>

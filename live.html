@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>指揮中心即時看板</title>
+<style>
+:root{
+  color-scheme: light;
+  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10); --wash:rgba(11,11,11,.035);
+  --s1:#2a78d6; --s1-soft:#cde2fb; --warn:#d03b3b; --warn-soft:rgba(208,59,59,.10);
+}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme="light"])){
+    color-scheme: dark;
+    --page:#0d0d0d; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10); --wash:rgba(255,255,255,.05);
+    --s1:#3987e5; --s1-soft:#0d366b; --warn:#e66767; --warn-soft:rgba(230,103,103,.14);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --page:#0d0d0d; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10); --wash:rgba(255,255,255,.05);
+  --s1:#3987e5; --s1-soft:#0d366b; --warn:#e66767; --warn-soft:rgba(230,103,103,.14);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI","Microsoft JhengHei",sans-serif}
+.wrap{max-width:1360px;margin:0 auto;padding:16px 16px 48px}
+header{display:flex;gap:6px 20px;flex-wrap:wrap;align-items:baseline;margin-bottom:12px}
+header h1{font-size:22px;margin:0;font-weight:650}
+header .sub{color:var(--ink2);font-size:13.5px}
+header a{color:var(--s1);text-decoration:none}
+header a:hover{text-decoration:underline}
+header .sp{margin-left:auto}
+select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--axis);border-radius:8px;padding:6px 10px}
+:focus-visible{outline:2px solid var(--s1);outline-offset:2px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:14px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;min-width:0}
+.tile .lab{color:var(--ink2);font-size:13.5px}
+.tile .val{font-size:30px;font-weight:650;line-height:1.15}
+.tile .val small{font-size:14px;font-weight:500;color:var(--ink2);margin-left:3px}
+.tile .ctx{color:var(--muted);font-size:12.5px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(420px,100%),1fr));gap:12px;margin-bottom:12px}
+.cols3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:12px}
+h2{font-size:17px;margin:0 0 2px;font-weight:650}
+.hint{color:var(--ink2);font-size:13px;margin:0 0 8px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;font-size:13.5px;color:var(--ink2)}
+.scroll{overflow:auto;max-height:420px;border:1px solid var(--grid);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:6px 9px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--grid)}
+tbody tr:last-child td{border-bottom:0}
+th{color:var(--ink2);font-weight:600;font-size:12.5px;background:var(--surface);position:sticky;top:0}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.sub2{color:var(--muted);font-size:12.5px}
+.big{font-weight:650}
+.tag{display:inline-block;font-size:12px;padding:1px 7px;border-radius:999px;background:var(--s1-soft);color:var(--ink)}
+.tag.w{background:var(--warn-soft)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;max-height:96px;overflow:auto}
+.chip{font:inherit;font-size:13px;color:var(--ink);background:var(--surface);border:1px solid var(--axis);border-radius:999px;padding:3px 10px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--s1);color:#fff;border-color:var(--s1)}
+.empty{color:var(--muted);font-size:13.5px;padding:14px 4px}
+.more{color:var(--muted);font-size:12.5px;margin-top:6px}
+.locked .tiles,.locked .cols,.locked .cols3,.locked header .sp{display:none}
+#gate{max-width:380px;margin:48px auto}
+#gate form{display:flex;gap:8px;margin-top:12px}
+#gate input{flex:1;min-width:0}
+#gate button{font:inherit;color:#fff;background:var(--s1);border:0;border-radius:8px;padding:8px 16px;cursor:pointer}
+#gate .msg{color:var(--ink2);font-size:13px;margin-top:10px;min-height:1.5em}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>指揮中心即時看板</h1>
+  <span class="sub"><span id="asof"></span> · 內部資料，請勿外傳 · <a href="./">車頭資源庫</a> · <a href="wait.html">等待時間軸</a></span>
+  <span class="sp"><label class="sub">只看 <select id="grp" aria-label="區別"></select></label></span>
+</header>
+<div id="gate" class="card" hidden>
+  <h2>請輸入通行碼</h2>
+  <form><input type="password" inputmode="numeric" autocomplete="off" aria-label="通行碼" placeholder="通行碼"><button type="submit">進入</button></form>
+  <div class="msg" role="status"></div>
+</div>
+
+<div class="tiles" id="tiles"></div>
+
+<div class="cols">
+  <div class="card">
+    <h2>現在閒著的車</h2>
+    <p class="hint">已經進站、下一班還沒到時間的車頭。空檔越長排越前面。</p>
+    <div class="bar">
+      <select id="iSt" aria-label="站所"></select>
+      <label>至少還能空 <select id="iMin" aria-label="至少空多久"><option value="30" selected>30 分</option><option value="60">60 分</option><option value="90">90 分</option><option value="120">2 小時</option></select></label>
+      <span id="iCount"></span>
+    </div>
+    <div class="scroll"><table id="idle"></table></div>
+  </div>
+  <div class="card">
+    <h2>加班找車</h2>
+    <p class="hint">選出發站（和目的站），列出離得最近、空檔夠的車頭。也可以直接點下面還沒派車的加班。</p>
+    <div class="chips" id="pend"></div>
+    <div class="bar">
+      <label>從 <select id="fFrom" aria-label="出發站"></select></label>
+      <label>到 <select id="fTo" aria-label="目的站"></select></label>
+      <span id="fNote"></span>
+    </div>
+    <div class="scroll"><table id="cand"></table></div>
+  </div>
+</div>
+
+<div class="cols3">
+  <div class="card"><h2>等太久</h2><p class="hint">在站內停超過 1 小時，下一班還要 30 分以上。</p><div id="aWait"></div></div>
+  <div class="card"><h2>該出發還沒出發</h2><p class="hint">已經超過表定出發時間 30 分以上（整晚都沒出車的不列）。</p><div id="aOut"></div></div>
+  <div class="card"><h2>會晚到</h2><p class="hint">在路上，預估比表定晚 30 分以上進站。</p><div id="aIn"></div></div>
+</div>
+</div>
+
+<script>
+const EMBED = /*__DATA__*/null, ONLINE = {"fn":"https://hmqnlovyzlvvnkqmfwtt.supabase.co/functions/v1/fleetdb","key":"live"};
+const $ = s => document.querySelector(s);
+const fmt = n => n == null ? '—' : Number(n).toLocaleString('zh-TW');
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const hm = m => m == null ? '' : String(Math.floor((m % 1440) / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+const dur = m => m == null ? '—' : m >= 60 ? Math.floor(m / 60) + ' 小時 ' + (m % 60 ? (m % 60) + ' 分' : '') : m + ' 分';
+const SPEED = 55;                                   // 估算空車移動時間用的平均時速（公里／小時）
+const STALE_MIN = 25;                               // 資料超過這麼久沒更新就提醒
+let D = null, wired = false, pendSel = '', note = '';
+const who = t => `<span class="big">${esc(t.id)}</span> ${esc(t.name)}`;
+const km = (a, b) => a === b ? 0 : (D.dist[a + '|' + b] ?? D.dist[b + '|' + a] ?? null);
+const table = (host, heads, rows, emptyText) => { host.innerHTML = rows.length ? '<thead><tr>' + heads.map(h => `<th class="${h.n ? 'n' : ''}">${esc(h.t)}</th>`).join('') + '</tr></thead><tbody>' + rows.map(r => '<tr>' + r.map((c, i) => `<td class="${heads[i].n ? 'n' : ''}">${c}</td>`).join('') + '</tr>').join('') + '</tbody>' : `<tbody><tr><td class="empty">${esc(emptyText)}</td></tr></tbody>`; };
+// 換資料時保留下拉選單原本選的值
+const fill = (sel, html) => { const v = sel.value; sel.innerHTML = html; if ([...sel.options].some(o => o.value === v)) sel.value = v; };
+
+function stamp() {
+  if (!D) return;
+  const age = Math.round((Date.now() - new Date(D.summary.at.replace(' ', 'T')).getTime()) / 60000);
+  $('#asof').innerHTML = `資料時間 ${esc(D.summary.at.slice(5).replace('-', '/'))}` + (age >= 0 ? `（${age < 60 ? age + ' 分鐘前' : Math.floor(age / 60) + ' 小時 ' + (age % 60) + ' 分前'}）` : '') +
+    (age > STALE_MIN ? ` <span class="tag w">超過 ${STALE_MIN} 分鐘沒更新，數字可能已經不準</span>` : '') + (note ? ` <span class="sub2">${esc(note)}</span>` : '');
+}
+
+function draw() {
+  const S = D.summary, now = S.now;
+  const g = $('#grp').value, T = D.tractors.filter(t => !g || t.grp === g);
+  const c = f => T.filter(f).length, sum = (a, f) => a.reduce((s, x) => s + f(x), 0);
+  const kmDone = sum(T, t => t.doneKm), kmPlan = sum(T, t => t.planKm), kmE = sum(T, t => t.emptyKm);
+  const tile = (lab, val, unit, ctx) => `<div class="card tile"><div class="lab">${esc(lab)}</div><div class="val">${val}<small>${esc(unit)}</small></div><div class="ctx">${ctx}</div></div>`;
+  $('#tiles').innerHTML =
+    tile('在路上', fmt(c(t => t.st === 'road')), '台', `今晚出車 ${fmt(T.length)} 台` + (c(t => t.st === 'lost') ? `；另有 ${fmt(c(t => t.st === 'lost'))} 台沒有進站紀錄` : '')) +
+    tile('在站內等下一班', fmt(c(t => t.st === 'stay')), '台', `已等 1 小時以上 ${fmt(c(t => t.st === 'stay' && t.waited >= 60))} 台`) +
+    tile('還沒出車', fmt(c(t => t.st === 'idle0')), '台', `今晚跑完 ${fmt(c(t => t.st === 'done'))} 台`) +
+    tile('已跑里程', fmt(Math.round(kmDone / 100) / 100), '萬公里', `今晚預計 ${fmt(Math.round(kmPlan / 100) / 100)} 萬；空車空櫃占已跑的 ${kmDone ? Math.round(kmE / kmDone * 100) : 0}%`) +
+    tile('還沒派車的加班', fmt(D.pend.length), '班', g ? '（全部區別合計）' : '櫃已封好、等車頭');
+
+  // ---- 現在閒著的車 ----
+  const minFree = +$('#iMin').value;
+  const inSt = T.filter(t => t.st === 'stay' || t.st === 'done');
+  const stCount = {}; inSt.forEach(t => stCount[t.at] = (stCount[t.at] || 0) + 1);
+  fill($('#iSt'), '<option value="">全部站所</option>' + Object.entries(stCount).sort((a, b) => b[1] - a[1]).map(([s, n]) => `<option value="${s}">${esc(D.stName[s] || s)}（${n}）</option>`).join(''));
+  const st = $('#iSt').value;
+  const idle = inSt.filter(t => (!st || t.at === st) && (t.free == null || t.free >= minFree)).sort((a, b) => (b.free ?? 1e6) - (a.free ?? 1e6) || b.waited - a.waited);
+  $('#iCount').textContent = `共 ${idle.length} 台`;
+  table($('#idle'), [{ t: '車頭' }, { t: '司機' }, { t: '在哪一站' }, { t: '已停', n: 1 }, { t: '下一班' }, { t: '還能空', n: 1 }],
+    idle.map(t => [who(t), esc(t.drv), esc(t.atName), dur(t.waited), t.next ? `${hm(t.next.out)} ${esc(t.next.name)} <span class="sub2">${esc(t.next.fromName)}→${esc(t.next.toName)}</span>` : '<span class="tag">今晚沒班了</span>', t.free == null ? '—' : `<span class="big">${dur(t.free)}</span>`]),
+    '目前沒有符合條件的車頭。');
+
+  // ---- 加班找車 ----
+  const from = $('#fFrom').value, to = $('#fTo').value;
+  if (!from) { table($('#cand'), [], [], '先選出發站，或點上面一班還沒派車的加班。'); $('#fNote').textContent = ''; }
+  else {
+    const leg = to ? km(from, to) : null;
+    const C = [];
+    for (const t of D.tractors) {             // 找車不受區別篩選限制：別區的車也可能最近
+      let ready, atName, k;
+      if (t.st === 'stay' || t.st === 'done') { k = km(t.at, from); if (k == null) continue; ready = now + Math.round(k / SPEED * 60); atName = t.atName; }
+      else if (t.st === 'road' && t.at === from && t.eta != null && t.eta - now <= 40) { k = 0; ready = Math.max(now, t.eta); atName = `快到${t.atName}（${hm(t.eta)}）`; }
+      else continue;
+      const until = t.next ? t.next.out : null;                         // 下一班出發時間
+      const back = t.next && to ? km(to, t.next.from) : (t.next ? km(from, t.next.from) : 0);
+      const need = to && leg != null && back != null ? Math.round((leg + back) / SPEED * 60) + 30 : null;   // 跑一趟＋回到下一班起站＋裝卸 30 分
+      const win = until == null ? null : until - ready;
+      if (win != null && win < 20) continue;
+      const verdict = need == null ? '' : win == null || win >= need ? '夠' : win >= need - 20 ? '有點趕' : '不夠';
+      C.push({ t, k, ready, atName, until, win, verdict });
+    }
+    const rank = { '夠': 0, '': 0, '有點趕': 1, '不夠': 2 };
+    C.sort((a, b) => rank[a.verdict] - rank[b.verdict] || a.k - b.k || (b.t.waited ?? 0) - (a.t.waited ?? 0));
+    $('#fNote').textContent = (to ? (leg != null ? `這一趟約 ${leg} 公里` : '這兩站之間的公里數沒有資料') + '；' : '') + `找到 ${C.length} 台`;
+    table($('#cand'), [{ t: '車頭' }, { t: '司機' }, { t: '現在在' }, { t: '空車過來', n: 1 }, { t: '最快幾點到' }, { t: '可以用到' }, { t: to ? '夠不夠跑' : '已停', n: !to }],
+      C.slice(0, 12).map(x => [who(x.t), esc(x.t.drv), esc(x.atName), x.k ? `${x.k} 公里` : '<span class="tag">就在這站</span>', hm(x.ready), x.until == null ? '今晚沒班了' : `${hm(x.until)} <span class="sub2">${esc(x.t.next.name)}</span>`, to ? (x.verdict ? `<span class="tag ${x.verdict === '夠' ? '' : 'w'}">${x.verdict}</span>` : '—') : dur(x.t.waited)]),
+      '附近沒有空檔夠的車頭。');
+  }
+
+  // ---- 要注意的 ----
+  const list = (host, rows, heads, emptyText) => { const top = rows.slice(0, 8); host.innerHTML = `<div class="scroll" style="max-height:none"><table></table></div>` + (rows.length > 8 ? `<div class="more">還有 ${rows.length - 8} 台</div>` : ''); table(host.querySelector('table'), heads, top, emptyText); };
+  list($('#aWait'), T.filter(t => t.st === 'stay' && t.waited >= 60 && t.free >= 30).sort((a, b) => b.waited - a.waited)
+    .map(t => [who(t), esc(t.atName), dur(t.waited), `${hm(t.next.out)} <span class="sub2">${esc(t.next.toName)}</span>`]), [{ t: '車頭' }, { t: '站' }, { t: '已停', n: 1 }, { t: '下一班' }], '目前沒有。');
+  list($('#aOut'), T.filter(t => t.next && t.next.planOut != null && now - t.next.planOut >= 30 && (t.st === 'stay' || (t.st === 'idle0' && now - t.next.planOut <= 180))).sort((a, b) => (now - b.next.planOut) - (now - a.next.planOut))
+    .map(t => [who(t), `${esc(t.next.name)} <span class="sub2">${esc(t.next.fromName)}→${esc(t.next.toName)}</span>`, hm(t.next.planOut), `<span class="tag w">晚 ${dur(now - t.next.planOut)}</span>`]), [{ t: '車頭' }, { t: '班次' }, { t: '表定' }, { t: '已晚', n: 1 }], '目前沒有。');
+  list($('#aIn'), T.filter(t => t.st === 'road' && t.lateIn >= 30).sort((a, b) => b.lateIn - a.lateIn)
+    .map(t => [who(t), `${esc(t.last.name)} <span class="sub2">→${esc(t.atName)}</span>`, hm(t.eta), `<span class="tag w">晚 ${dur(t.lateIn)}</span>`]), [{ t: '車頭' }, { t: '班次' }, { t: '預估進站' }, { t: '會晚', n: 1 }], '目前沒有。');
+}
+
+/** 換上一份新資料：重建選單與待派加班，保留使用者原本選的東西 */
+function render(d) {
+  D = d;
+  const groups = [...new Set(D.tractors.map(t => t.grp).filter(Boolean))];
+  fill($('#grp'), '<option value="">全部</option>' + groups.map(g => `<option>${esc(g)}</option>`).join(''));
+  const stations = Object.entries(D.stName).sort((a, b) => a[1].localeCompare(b[1], 'zh-Hant'));
+  fill($('#fFrom'), '<option value="">選出發站</option>' + stations.map(([c, n]) => `<option value="${c}">${esc(n)}</option>`).join(''));
+  fill($('#fTo'), '<option value="">（不指定）</option>' + stations.map(([c, n]) => `<option value="${c}">${esc(n)}</option>`).join(''));
+  $('#pend').innerHTML = D.pend.length ? D.pend.map((p, i) => `<button class="chip" data-i="${i}" aria-pressed="${pendSel === p.no + '|' + p.box}" title="櫃號 ${esc(p.box)}${p.seal ? '，封櫃 ' + esc(p.seal) : ''}">${esc(p.name)}　${esc(p.fromName)}→${esc(p.toName)}</button>`).join('') : '<span class="sub2">目前沒有還沒派車的加班。</span>';
+  if (!wired) {
+    wired = true;
+    $('#pend').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; const p = D.pend[+b.dataset.i]; pendSel = p.no + '|' + p.box; document.querySelectorAll('#pend .chip').forEach(x => x.setAttribute('aria-pressed', x === b)); $('#fFrom').value = p.from; $('#fTo').value = D.stName[p.to] ? p.to : ''; draw(); });
+    ['grp', 'iSt', 'iMin'].forEach(id => $('#' + id).addEventListener('input', draw));
+    ['fFrom', 'fTo'].forEach(id => $('#' + id).addEventListener('input', () => { pendSel = ''; document.querySelectorAll('#pend .chip').forEach(x => x.setAttribute('aria-pressed', 'false')); draw(); }));
+    setInterval(stamp, 30000);
+  }
+  stamp(); draw();
+}
+
+/* ---------- 啟動：本機版直接用內嵌資料；線上版先驗通行碼再向後端取資料，之後每 2 分鐘看有沒有新的 ---------- */
+async function loadOnline(code) {
+  const r = await fetch(ONLINE.fn, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'get', code, key: ONLINE.key }) });
+  if (r.status === 401) throw new Error('通行碼錯誤');
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || ('讀取失敗（' + r.status + '）'));
+  const bin = Uint8Array.from(atob(j.data), c => c.charCodeAt(0));
+  return JSON.parse(await new Response(new Blob([bin]).stream().pipeThrough(new DecompressionStream('gzip'))).text());
+}
+(function start() {
+  if (EMBED) return render(EMBED);
+  const gate = document.getElementById('gate'), form = gate.querySelector('form'), msg = gate.querySelector('.msg'), inp = gate.querySelector('input'), btn = gate.querySelector('button');
+  const store = { get() { try { return sessionStorage.getItem('fd_code') || ''; } catch (e) { return ''; } }, set(v) { try { v ? sessionStorage.setItem('fd_code', v) : sessionStorage.removeItem('fd_code'); } catch (e) {} } };
+  async function go(code) {
+    msg.textContent = '讀取資料中…'; btn.disabled = true;
+    try {
+      const d = await loadOnline(code); store.set(code); gate.hidden = true; document.body.classList.remove('locked'); render(d);
+      setInterval(async () => {
+        if (document.hidden) return;                 // 分頁沒在看就不抓
+        try { const n = await loadOnline(code); note = ''; if (n.summary.at !== D.summary.at) render(n); else stamp(); }
+        catch (e) { note = '（剛才更新失敗，稍後會再試）'; stamp(); }
+      }, 120000);
+    } catch (e) { store.set(''); msg.textContent = e.message || '讀取失敗'; btn.disabled = false; inp.value = ''; inp.focus(); }
+  }
+  document.body.classList.add('locked'); gate.hidden = false;
+  form.addEventListener('submit', e => { e.preventDefault(); const v = inp.value.trim(); if (v) go(v); });
+  const saved = store.get(); if (saved) go(saved); else inp.focus();
+})();
+</script>
+</body>
+</html>
