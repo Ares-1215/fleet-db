@@ -231,6 +231,13 @@ const A = D.stays.map(s => ({ di: s[0], slot: s[1], st: s[2], a: s[3], b: s[4], 
 const P = D.plans.map(s => ({ di: s[0], slot: s[1], st: s[2], a: s[3], b: s[4], min: s[4] - s[3] }));
 let TH = 60;
 
+// 站所選單分區（跟公司「班次點卸狀況表」同一份分區）；label(c) 決定每一站顯示的文字
+const REG_ORDER = ['北一區', '北二區', '桃竹區', '中區', '彰嘉區', '南區', '其他'];
+function stOpts(codes, label) {
+  const g = {}; for (const c of codes) { const r = (D.reg && D.reg[c]) || '其他'; (g[r] = g[r] || []).push(c); }
+  return REG_ORDER.filter(r => g[r]).map(r => `<optgroup label="${r}">` + g[r].sort().map(c => `<option value="${c}">${esc(label(c))}</option>`).join('') + '</optgroup>').join('');
+}
+
 /* ---------- tabs ---------- */
 const TABS = ['ov', 'tl', 'hm', 'rp', 'dt', 'def'];
 function showTab(t) { document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-selected', x.dataset.t === t)); TABS.forEach(id => $('#' + id).hidden = id !== t); if (t === 'tl') drawTimeline(); }
@@ -321,7 +328,9 @@ $('#stTable').addEventListener('keydown', e => { if (e.key === 'Enter') { const 
 /* ---------- 站所時間軸 ---------- */
 function fillStations() {
   const S = byStation(), cur = $('#tlSt').value;
-  $('#tlSt').innerHTML = S.map(s => `<option value="${s.st}">${esc(stName(s.st))}（每晚 ${r1(s.min / 60 / N)} 小時）</option>`).join('');
+  const hrs = {}; S.forEach(s => hrs[s.st] = r1(s.min / 60 / N));
+  $('#tlSt').innerHTML = stOpts(S.map(s => s.st), c => `${c}${D.st[c] || ''}（每晚 ${hrs[c]} 小時）`);
+  if (!S.some(s => s.st === cur) && S.length) $('#tlSt').value = S[0].st;      // 預設選等待時數最多的站
   if (S.some(s => s.st === cur)) $('#tlSt').value = cur;
 }
 $('#tlDate').innerHTML = D.dates.map((d, i) => `<option value="${i}">${dLabel(d)}${d.normal ? '' : '　非常態'}</option>`).reverse().join('');
@@ -384,7 +393,7 @@ function drawRepeat() {
   const all = Object.values(o).filter(x => x.days.size >= N * share / 100).sort((x, y) => y.m / y.n - x.m / x.n);
   const cnt = {}; all.forEach(x => cnt[x.st] = (cnt[x.st] || 0) + 1);
   const cur = $('#rpSt').value;
-  $('#rpSt').innerHTML = '<option value="">全部站所</option>' + Object.entries(cnt).sort((a, b) => b[1] - a[1]).map(([c, k]) => `<option value="${c}">${esc(stName(c))}（${k} 組）</option>`).join('');
+  $('#rpSt').innerHTML = '<option value="">全部站所</option>' + stOpts(Object.keys(cnt), c => `${c}${D.st[c] || ''}（${cnt[c]} 組）`);
   if (cnt[cur]) $('#rpSt').value = cur;
   rpRows = all.filter(x => !$('#rpSt').value || x.st === $('#rpSt').value);
   const hrs = all.reduce((s, x) => s + x.m, 0) / 60 / N, tot = A.filter(s => useIdx.has(s.di) && s.min >= TH).reduce((s, x) => s + x.min, 0) / 60 / N;

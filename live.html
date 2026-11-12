@@ -143,6 +143,12 @@ function kmx(a, b) {
 const km = (a, b) => { const x = kmx(a, b); return x ? x.k : null; };
 const kmText = (a, b) => { const x = kmx(a, b); return x == null ? '' : (x.e ? '約 ' : '') + x.k + ' 公里'; };
 const table = (host, heads, rows, emptyText) => { host.innerHTML = rows.length ? '<thead><tr>' + heads.map(h => `<th class="${h.n ? 'n' : ''}">${esc(h.t)}</th>`).join('') + '</tr></thead><tbody>' + rows.map(r => '<tr>' + r.map((c, i) => `<td class="${heads[i].n ? 'n' : ''}">${c}</td>`).join('') + '</tr>').join('') + '</tbody>' : `<tbody><tr><td class="empty">${esc(emptyText)}</td></tr></tbody>`; };
+// 站所選單分區（跟公司「班次點卸狀況表」同一份分區）；label(c) 決定每一站顯示的文字
+const REG_ORDER = ['北一區', '北二區', '桃竹區', '中區', '彰嘉區', '南區', '其他'];
+function stOpts(codes, label) {
+  const g = {}; for (const c of codes) { const r = (D.reg && D.reg[c]) || '其他'; (g[r] = g[r] || []).push(c); }
+  return REG_ORDER.filter(r => g[r]).map(r => `<optgroup label="${r}">` + g[r].sort().map(c => `<option value="${c}">${esc(label(c))}</option>`).join('') + '</optgroup>').join('');
+}
 // 換資料時保留下拉選單原本選的值
 const fill = (sel, html) => { const v = sel.value; sel.innerHTML = html; if ([...sel.options].some(o => o.value === v)) sel.value = v; };
 
@@ -168,9 +174,9 @@ function draw() {
 
   // ---- 現在閒著的車 ----
   const minFree = +$('#iMin').value;
-  const inSt = T.filter(t => t.st === 'stay' || t.st === 'done');
+  const inSt = T.filter(t => (t.st === 'stay' || t.st === 'done') && (t.free == null || t.free >= minFree));   // 選單上的台數要跟下面列出來的一致
   const stCount = {}; inSt.forEach(t => stCount[t.at] = (stCount[t.at] || 0) + 1);
-  fill($('#iSt'), '<option value="">全部站所</option>' + Object.entries(stCount).sort((a, b) => b[1] - a[1]).map(([s, n]) => `<option value="${s}">${esc(D.stName[s] || s)}（${n}）</option>`).join(''));
+  fill($('#iSt'), '<option value="">全部站所</option>' + stOpts(Object.keys(stCount), c => `${c}${D.stName[c] || ''}（${stCount[c]}）`));
   const st = $('#iSt').value;
   const idle = inSt.filter(t => (!st || t.at === st) && (t.free == null || t.free >= minFree)).sort((a, b) => (b.free ?? 1e6) - (a.free ?? 1e6) || b.waited - a.waited);
   $('#iCount').textContent = `共 ${idle.length} 台`;
@@ -222,8 +228,8 @@ function render(d) {
   const groups = [...new Set(D.tractors.map(t => t.grp).filter(Boolean))];
   fill($('#grp'), '<option value="">全部</option>' + groups.map(g => `<option>${esc(g)}</option>`).join(''));
   const stations = Object.entries(D.stName).filter(x => x[0]).map(([c, n]) => [c, n || c]).sort((a, b) => a[1].localeCompare(b[1], 'zh-Hant'));
-  fill($('#fFrom'), '<option value="">選出發站</option>' + stations.map(([c, n]) => `<option value="${c}">${esc(n)}</option>`).join(''));
-  fill($('#fTo'), '<option value="">（不指定）</option>' + stations.map(([c, n]) => `<option value="${c}">${esc(n)}</option>`).join(''));
+  fill($('#fFrom'), '<option value="">選出發站</option>' + stOpts(stations.map(x => x[0]), c => c + (D.stName[c] || '')));
+  fill($('#fTo'), '<option value="">（不指定）</option>' + stOpts(stations.map(x => x[0]), c => c + (D.stName[c] || '')));
   $('#pend').innerHTML = D.pend.length ? D.pend.map((p, i) => `<button class="chip" data-i="${i}" aria-pressed="${pendSel === p.no + '|' + p.box}" title="櫃號 ${esc(p.box)}${p.seal ? '，封櫃 ' + esc(p.seal) : ''}">${esc(p.name)}　${esc(p.fromName)}→${esc(p.toName)}</button>`).join('') : '<span class="sub2">目前沒有還沒派車的加班。</span>';
   if (!wired) {
     wired = true;
