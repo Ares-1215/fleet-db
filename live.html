@@ -63,7 +63,13 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .chip{font:inherit;font-size:13px;color:var(--ink);background:var(--surface);border:1px solid var(--axis);border-radius:999px;padding:3px 10px;cursor:pointer}
 .chip[aria-pressed="true"]{background:var(--s1);color:#fff;border-color:var(--s1)}
 .empty{color:var(--muted);font-size:13.5px;padding:14px 4px}
-.more{color:var(--muted);font-size:12.5px;margin-top:6px}
+.morebtn{font:inherit;font-size:13px;color:var(--s1);background:none;border:0;padding:8px 0 0;cursor:pointer;text-align:left}
+.morebtn:hover{text-decoration:underline}
+/* 三張「要注意的」清單：允許換行，欄位才塞得進卡片、不用左右捲 */
+.alist td{white-space:normal;vertical-align:top;padding:6px 7px}
+.alist th{padding:6px 7px}
+.alist td.n,.alist td:nth-child(3){white-space:nowrap}
+.alist .tag{white-space:nowrap}
 .locked .tiles,.locked .cols,.locked .cols3,.locked header .sp{display:none}
 #gate{max-width:380px;margin:48px auto}
 #gate form{display:flex;gap:8px;margin-top:12px}
@@ -129,6 +135,7 @@ const dur = m => m == null ? '—' : m >= 60 ? Math.floor(m / 60) + ' 小時 ' +
 const SPEED = 55;                                   // 估算空車移動時間用的平均時速（公里／小時）
 const STALE_MIN = 25;                               // 資料超過這麼久沒更新就提醒
 let D = null, wired = false, pendSel = '', note = '';
+const expand = {};                                  // 哪幾張「要注意的」清單目前是展開看全部
 const who = t => `<span class="big">${esc(t.id)}</span> ${esc(t.name)}`;
 // 站間公里：有班次里程就用里程；沒有就估（一東一西或有一端沒有位置 → 用班次串起來的路徑；其餘 → 直線距離 × 繞路係數）
 const hav = (p, q) => { const R = 6371, r = x => x * Math.PI / 180, dLa = r(q[0] - p[0]), dLo = r(q[1] - p[1]); const h = Math.sin(dLa / 2) ** 2 + Math.cos(r(p[0])) * Math.cos(r(q[0])) * Math.sin(dLo / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); };
@@ -213,13 +220,20 @@ function draw() {
   }
 
   // ---- 要注意的 ----
-  const list = (host, rows, heads, emptyText) => { const top = rows.slice(0, 8); host.innerHTML = `<div class="scroll" style="max-height:none"><table></table></div>` + (rows.length > 8 ? `<div class="more">還有 ${rows.length - 8} 台</div>` : ''); table(host.querySelector('table'), heads, top, emptyText); };
+  // 每張清單先列最嚴重的 8 台；超過的話下面有按鈕可以展開看全部（展開狀態在換資料時會保留）
+  const list = (host, rows, heads, emptyText) => {
+    const all = !!expand[host.id], show = all ? rows : rows.slice(0, 8);
+    host.innerHTML = `<div class="scroll alist" style="max-height:${all ? '60vh' : 'none'}"><table></table></div>` +
+      (rows.length > 8 ? `<button class="morebtn" data-k="${host.id}" aria-expanded="${all}">${all ? '只看最嚴重的 8 台' : `看全部 ${rows.length} 台（還有 ${rows.length - 8} 台沒列出來）`}</button>` : '');
+    table(host.querySelector('table'), heads, show, emptyText);
+  };
+  const two = (a, b) => `${esc(a)}<div class="sub2">${esc(b)}</div>`;      // 班次名稱一行、起迄站一行，欄位才不會太寬
   list($('#aWait'), T.filter(t => t.st === 'stay' && t.waited >= 60 && t.free >= 30).sort((a, b) => b.waited - a.waited)
-    .map(t => [who(t), esc(t.atName), dur(t.waited), `${hm(t.next.out)} <span class="sub2">${esc(t.next.toName)}</span>`]), [{ t: '車頭' }, { t: '站' }, { t: '已停', n: 1 }, { t: '下一班' }], '目前沒有。');
+    .map(t => [who(t), esc(t.atName), dur(t.waited), two(hm(t.next.out), '往' + t.next.toName)]), [{ t: '車頭' }, { t: '站' }, { t: '已停', n: 1 }, { t: '下一班' }], '目前沒有。');
   list($('#aOut'), T.filter(t => t.next && t.next.planOut != null && now - t.next.planOut >= 30 && (t.st === 'stay' || (t.st === 'idle0' && now - t.next.planOut <= 180))).sort((a, b) => (now - b.next.planOut) - (now - a.next.planOut))
-    .map(t => [who(t), `${esc(t.next.name)} <span class="sub2">${esc(t.next.fromName)}→${esc(t.next.toName)}</span>`, hm(t.next.planOut), `<span class="tag w">晚 ${dur(now - t.next.planOut)}</span>`]), [{ t: '車頭' }, { t: '班次' }, { t: '表定' }, { t: '已晚', n: 1 }], '目前沒有。');
+    .map(t => [who(t), two(t.next.name, t.next.fromName + '→' + t.next.toName), hm(t.next.planOut), `<span class="tag w">${dur(now - t.next.planOut)}</span>`]), [{ t: '車頭' }, { t: '班次' }, { t: '表定' }, { t: '已晚', n: 1 }], '目前沒有。');
   list($('#aIn'), T.filter(t => t.st === 'road' && t.lateIn >= 30).sort((a, b) => b.lateIn - a.lateIn)
-    .map(t => [who(t), `${esc(t.last.name)} <span class="sub2">→${esc(t.atName)}</span>`, hm(t.eta), `<span class="tag w">晚 ${dur(t.lateIn)}</span>`]), [{ t: '車頭' }, { t: '班次' }, { t: '預估進站' }, { t: '會晚', n: 1 }], '目前沒有。');
+    .map(t => [who(t), two(t.last.name, '往' + t.atName), hm(t.eta), `<span class="tag w">${dur(t.lateIn)}</span>`]), [{ t: '車頭' }, { t: '班次' }, { t: '預估進站' }, { t: '會晚', n: 1 }], '目前沒有。');
 }
 
 /** 換上一份新資料：重建選單與待派加班，保留使用者原本選的東西 */
@@ -233,6 +247,7 @@ function render(d) {
   $('#pend').innerHTML = D.pend.length ? D.pend.map((p, i) => `<button class="chip" data-i="${i}" aria-pressed="${pendSel === p.no + '|' + p.box}" title="櫃號 ${esc(p.box)}${p.seal ? '，封櫃 ' + esc(p.seal) : ''}">${esc(p.name)}　${esc(p.fromName)}→${esc(p.toName)}</button>`).join('') : '<span class="sub2">目前沒有還沒派車的加班。</span>';
   if (!wired) {
     wired = true;
+    document.querySelector('.cols3').addEventListener('click', e => { const b = e.target.closest('.morebtn'); if (!b) return; expand[b.dataset.k] = !expand[b.dataset.k]; draw(); });
     $('#pend').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; const p = D.pend[+b.dataset.i]; pendSel = p.no + '|' + p.box; document.querySelectorAll('#pend .chip').forEach(x => x.setAttribute('aria-pressed', x === b)); $('#fFrom').value = p.from; $('#fTo').value = D.stName[p.to] ? p.to : ''; draw(); });
     ['grp', 'iSt', 'iMin', 'fMax'].forEach(id => $('#' + id).addEventListener('input', draw));
     ['fFrom', 'fTo'].forEach(id => $('#' + id).addEventListener('input', () => { pendSel = ''; document.querySelectorAll('#pend .chip').forEach(x => x.setAttribute('aria-pressed', 'false')); draw(); }));
