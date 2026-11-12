@@ -105,6 +105,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
     <div class="bar">
       <label>從 <select id="fFrom" aria-label="出發站"></select></label>
       <label>到 <select id="fTo" aria-label="目的站"></select></label>
+      <label>最遠調車 <select id="fMax" aria-label="最遠調車距離"><option value="30">30 公里</option><option value="60" selected>60 公里</option><option value="100">100 公里</option><option value="99999">不限</option></select></label>
       <span id="fNote"></span>
     </div>
     <div class="scroll"><table id="cand"></table></div>
@@ -181,13 +182,14 @@ function draw() {
   const from = $('#fFrom').value, to = $('#fTo').value;
   if (!from) { table($('#cand'), [], [], '先選出發站，或點上面一班還沒派車的加班。'); $('#fNote').textContent = ''; }
   else {
-    const leg = to ? km(from, to) : null;
+    const leg = to ? km(from, to) : null, maxKm = +$('#fMax').value;
     const C = [];
     for (const t of D.tractors) {             // 找車不受區別篩選限制：別區的車也可能最近
       let ready, atName, k;
       if (t.st === 'stay' || t.st === 'done') { k = km(t.at, from); if (k == null) continue; ready = now + Math.round(k / SPEED * 60); atName = t.atName; }
       else if (t.st === 'road' && t.at === from && t.eta != null && t.eta - now <= 40) { k = 0; ready = Math.max(now, t.eta); atName = `快到${t.atName}（${hm(t.eta)}）`; }
       else continue;
+      if (k > maxKm) continue;                                           // 太遠的不考慮，空車開過來不划算
       const until = t.next ? t.next.out : null;                         // 下一班出發時間
       const back = t.next && to ? km(to, t.next.from) : (t.next ? km(from, t.next.from) : 0);
       const need = to && leg != null && back != null ? Math.round((leg + back) / SPEED * 60) + 30 : null;   // 跑一趟＋回到下一班起站＋裝卸 30 分
@@ -198,10 +200,10 @@ function draw() {
     }
     const rank = { '夠': 0, '': 0, '有點趕': 1, '不夠': 2 };
     C.sort((a, b) => rank[a.verdict] - rank[b.verdict] || a.k - b.k || (b.t.waited ?? 0) - (a.t.waited ?? 0));
-    $('#fNote').textContent = (to ? (leg != null ? `這一趟${kmText(from, to)}` : '這兩站之間的公里數沒有資料') + '；' : '') + `找到 ${C.length} 台` + (C.some(x => x.e) ? '（「約」是估算的公里數）' : '');
+    $('#fNote').textContent = (to ? (leg != null ? `這一趟${kmText(from, to)}` : '這兩站之間的公里數沒有資料') + '；' : '') + `${maxKm < 9999 ? maxKm + ' 公里內' : ''}找到 ${C.length} 台` + (C.some(x => x.e) ? '（「約」是估算的公里數）' : '');
     table($('#cand'), [{ t: '車頭' }, { t: '司機' }, { t: '現在在' }, { t: '空車過來', n: 1 }, { t: '最快幾點到' }, { t: '可以用到' }, { t: to ? '夠不夠跑' : '已停', n: !to }],
       C.slice(0, 12).map(x => [who(x.t), esc(x.t.drv), esc(x.atName), x.k ? `${x.e ? '約 ' : ''}${x.k} 公里` : '<span class="tag">就在這站</span>', hm(x.ready), x.until == null ? '今晚沒班了' : `${hm(x.until)} <span class="sub2">${esc(x.t.next.name)}</span>`, to ? (x.verdict ? `<span class="tag ${x.verdict === '夠' ? '' : 'w'}">${x.verdict}</span>` : '—') : dur(x.t.waited)]),
-      '附近沒有空檔夠的車頭。');
+      maxKm < 9999 ? `${maxKm} 公里內沒有空檔夠的車頭，可以把「最遠調車」放寬。` : '沒有空檔夠的車頭。');
   }
 
   // ---- 要注意的 ----
@@ -226,7 +228,7 @@ function render(d) {
   if (!wired) {
     wired = true;
     $('#pend').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; const p = D.pend[+b.dataset.i]; pendSel = p.no + '|' + p.box; document.querySelectorAll('#pend .chip').forEach(x => x.setAttribute('aria-pressed', x === b)); $('#fFrom').value = p.from; $('#fTo').value = D.stName[p.to] ? p.to : ''; draw(); });
-    ['grp', 'iSt', 'iMin'].forEach(id => $('#' + id).addEventListener('input', draw));
+    ['grp', 'iSt', 'iMin', 'fMax'].forEach(id => $('#' + id).addEventListener('input', draw));
     ['fFrom', 'fTo'].forEach(id => $('#' + id).addEventListener('input', () => { pendSel = ''; document.querySelectorAll('#pend .chip').forEach(x => x.setAttribute('aria-pressed', 'false')); draw(); }));
     setInterval(stamp, 30000);
   }
