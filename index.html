@@ -109,7 +109,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 <div class="cols">
   <div class="card">
     <h2>現在閒著的車</h2>
-    <p class="hint">已經進站、下一班還沒到時間的車頭。空檔越長排越前面。</p>
+    <p class="hint">人車在站上、下一班還沒到時間的車頭：跑完一趟在等的，和已經報到還沒出車的。空檔越長排越前面。標「班表排的空檔」的要看車，不一定能派。</p>
     <div class="bar">
       <select id="iSt" aria-label="站所"></select>
       <label>至少還能空 <select id="iMin" aria-label="至少空多久"><option value="30" selected>30 分</option><option value="60">60 分</option><option value="90">90 分</option><option value="120">2 小時</option></select></label>
@@ -132,8 +132,8 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 </div>
 
 <div class="cols3">
-  <div class="card" id="secWait"><h2>等太久</h2><p class="hint">在站內停超過 1 小時，下一班還要 30 分以上。</p><div id="aWait"></div></div>
-  <div class="card" id="secOut"><h2>該出發還沒出發</h2><p class="hint">已經超過表定出發時間 30 分以上（整晚都沒出車的不列）。</p><div id="aOut"></div></div>
+  <div class="card" id="secWait"><h2>中途該走了還沒走</h2><p class="hint">已經出過車、停在站內，超過下一班表定出發時間 30 分以上。</p><div id="aWait"></div></div>
+  <div class="card" id="secOut"><h2>首班還沒出車</h2><p class="hint">還沒出車，超過首班表定出發時間 30 分以上（晚超過 3 小時的當作今晚不出車，不列）。</p><div id="aOut"></div></div>
   <div class="card" id="secIn"><h2>會晚到</h2><p class="hint">在路上，預估比表定晚 30 分以上進站。</p><div id="aIn"></div></div>
 </div>
 </div>
@@ -185,31 +185,35 @@ function draw() {
   const c = f => T.filter(f).length, sum = (a, f) => a.reduce((s, x) => s + f(x), 0);
   const kmDone = sum(T, t => t.doneKm), kmPlan = sum(T, t => t.planKm), kmE = sum(T, t => t.emptyKm);
   // 下面三張「要注意的」清單先算好：上面的格子要寫出各有幾台，點了就跳過去
-  const aWait = T.filter(t => t.st === 'stay' && t.waited >= 60 && t.free >= 30).sort((a, b) => b.waited - a.waited);
-  const aOut = T.filter(t => t.next && t.next.planOut != null && now - t.next.planOut >= 30 && (t.st === 'stay' || (t.st === 'idle0' && now - t.next.planOut <= 180))).sort((a, b) => (now - b.next.planOut) - (now - a.next.planOut));
+  // 都以表定時間為準：班表本來就排的空檔、出車前的報到到位，都不算異常
+  const late = t => t.next && t.next.planOut != null ? now - t.next.planOut : -1;
+  const notOut = t => t.st === 'idle0' || t.st === 'pre';                                                             // 還沒出車（pre＝已報到、第一班還沒出發）
+  const aWait = T.filter(t => t.st === 'stay' && late(t) >= 30).sort((a, b) => late(b) - late(a));                     // 中途該走了還沒走
+  const aOut = T.filter(t => notOut(t) && late(t) >= 30 && late(t) <= 180).sort((a, b) => late(b) - late(a));          // 首班還沒出車（晚超過 3 小時的當作今晚不出車）
   const aIn = T.filter(t => t.st === 'road' && t.lateIn >= 30).sort((a, b) => b.lateIn - a.lateIn);
-  // 今晚到現在一共等了多久：已經等完的＋現在還在等的，每次 1～6 小時才算（跟「等待時間軸」同一個算法）
-  const waitMin = sum(T, t => (t.wDone || 0) + (t.st === 'stay' && t.waited >= 60 && t.waited <= 360 ? t.waited : 0));
+  // 今晚「過了表定出發時間還在站內」的時間：已經等完的＋現在還在等的（只看在站 1～6 小時的那幾次，跟歷史統計同一個算法）
+  const overMin = sum(T, t => (t.wOver || 0) + (t.st === 'stay' && t.waited >= 60 && t.waited <= 360 ? Math.max(0, now - Math.max(t.since, t.next && t.next.planOut != null ? t.next.planOut : t.since)) : 0));
   const wan = k => fmt(Math.round(k / 100) / 100);
   const kmShort = k => k >= 10000 ? wan(k) + ' 萬公里' : fmt(Math.round(k)) + ' 公里';
   const tile = (lab, val, unit, ctx, go, to, tip) => `<${to ? `a href="#${to}" data-to="${to}"` : 'div'} class="card tile"${tip ? ` title="${esc(tip)}"` : ''}><div class="lab">${esc(lab)}</div><div class="val">${val}<small>${esc(unit)}</small></div><div class="ctx">${ctx}</div>${go ? `<div class="go">${esc(go)} ›</div>` : ''}</${to ? 'a' : 'div'}>`;
   $('#tiles').innerHTML =
     tile('在路上', fmt(c(t => t.st === 'road')), '台', `今晚出車 ${fmt(T.length)} 台` + (c(t => t.st === 'lost') ? `；另有 ${fmt(c(t => t.st === 'lost'))} 台沒有進站紀錄` : ''), `會晚到 ${fmt(aIn.length)} 台`, 'secIn') +
-    tile('在站內等下一班', fmt(c(t => t.st === 'stay')), '台', `今晚到現在共等了 ${fmt(Math.round(waitMin / 60))} 小時`, `等太久 ${fmt(aWait.length)} 台`, 'secWait', '每次在站內等 1 小時以上、6 小時以內才算進「共等了幾小時」') +
-    tile('還沒出車', fmt(c(t => t.st === 'idle0')), '台', `今晚跑完 ${fmt(c(t => t.st === 'done'))} 台`, `該出發還沒出發 ${fmt(aOut.length)} 台`, 'secOut') +
+    tile('在站內等下一班', fmt(c(t => t.st === 'stay')), '台', `今晚已有 ${fmt(Math.round(overMin / 60))} 小時是過了表定時間還在等`, `該走了還沒走 ${fmt(aWait.length)} 台`, 'secWait', '只算在站內 1 小時以上的那幾次裡，超過表定出發時間之後的部分；臨時加開、沒有表定時間的班次整段都算。出車前的報到到位不算。') +
+    tile('還沒出車', fmt(c(notOut)), '台', `其中已報到 ${fmt(c(t => t.st === 'pre'))} 台；今晚跑完 ${fmt(c(t => t.st === 'done'))} 台`, `首班還沒出車 ${fmt(aOut.length)} 台`, 'secOut', '已報到＝做完出車檢查、人車在站上，但第一班還沒出發') +
     tile('已跑里程', wan(kmDone), '萬公里', `今晚預計 ${wan(kmPlan)} 萬 · 空車空櫃 ${kmShort(kmE)}` + (kmDone >= 5000 ? `（${Math.round(kmE / kmDone * 100)}%）` : ''), '', '', '空車空櫃：班次名稱有「空」字，或沒有班次名稱的移動。剛開始跑的時候公里數少，占比先不顯示') +
     tile('還沒派車的加班', fmt(D.pend.length), '班', g ? '（全部車隊合計）' : '櫃已封好、等車頭', '幫加班找車', 'secFind');
 
   // ---- 現在閒著的車 ----
   const minFree = +$('#iMin').value;
-  const inSt = T.filter(t => (t.st === 'stay' || t.st === 'done') && (t.free == null || t.free >= minFree));   // 選單上的台數要跟下面列出來的一致
+  const inSt = T.filter(t => (t.st === 'stay' || t.st === 'done' || t.st === 'pre') && (t.free == null || t.free >= minFree));   // 選單上的台數要跟下面列出來的一致
   const stCount = {}; inSt.forEach(t => stCount[t.at] = (stCount[t.at] || 0) + 1);
   fill($('#iSt'), '<option value="">全部站所</option>' + stOpts(Object.keys(stCount), c => `${c}${D.stName[c] || ''}（${stCount[c]}）`));
   const st = $('#iSt').value;
-  const idle = inSt.filter(t => (!st || t.at === st) && (t.free == null || t.free >= minFree)).sort((a, b) => (b.free ?? 1e6) - (a.free ?? 1e6) || b.waited - a.waited);
+  const idle = inSt.filter(t => (!st || t.at === st) && (t.free == null || t.free >= minFree)).sort((a, b) => (b.free ?? 1e6) - (a.free ?? 1e6) || (b.waited ?? 0) - (a.waited ?? 0));
   $('#iCount').textContent = `共 ${idle.length} 台`;
-  table($('#idle'), [{ t: '車頭' }, { t: '司機' }, { t: '在哪一站' }, { t: '已停', n: 1 }, { t: '下一班' }, { t: '還能空', n: 1 }],
-    idle.map(t => [who(t), esc(t.drv), esc(t.atName), dur(t.waited), t.next ? `${hm(t.next.out)} ${esc(t.next.name)} <span class="sub2">${esc(t.next.fromName)}→${esc(t.next.toName)}</span>` : '<span class="tag">今晚沒班了</span>', t.free == null ? '—' : `<span class="big">${dur(t.free)}</span>`]),
+  const how = t => t.st === 'pre' ? `<span class="tag">還沒出車</span> <span class="sub2">${hm(t.since)} 報到</span>` : `已停 ${dur(t.waited)}` + (t.sched ? ' <span class="tag">班表排的空檔</span>' : '');
+  table($('#idle'), [{ t: '車頭' }, { t: '司機' }, { t: '在哪一站' }, { t: '狀況' }, { t: '下一班' }, { t: '還能空', n: 1 }],
+    idle.map(t => [who(t), esc(t.drv), esc(t.atName), how(t), t.next ? `${hm(t.next.out)} ${esc(t.next.name)} <span class="sub2">${esc(t.next.fromName)}→${esc(t.next.toName)}</span>` : '<span class="tag">今晚沒班了</span>', t.free == null ? '—' : `<span class="big">${dur(t.free)}</span>`]),
     '目前沒有符合條件的車頭。');
 
   // ---- 加班找車 ----
@@ -220,7 +224,7 @@ function draw() {
     const C = [];
     for (const t of D.tractors) {             // 找車不受車隊篩選限制：別的車隊的車也可能最近
       let ready, atName, k;
-      if (t.st === 'stay' || t.st === 'done') { k = km(t.at, from); if (k == null) continue; ready = now + Math.round(k / SPEED * 60); atName = t.atName; }
+      if (t.st === 'stay' || t.st === 'done' || t.st === 'pre') { k = km(t.at, from); if (k == null) continue; ready = now + Math.round(k / SPEED * 60); atName = t.atName; }
       else if (t.st === 'road' && t.at === from && t.eta != null && t.eta - now <= 40) { k = 0; ready = Math.max(now, t.eta); atName = `快到${t.atName}（${hm(t.eta)}）`; }
       else continue;
       if (k > maxKm) continue;                                           // 太遠的不考慮，空車開過來不划算
@@ -236,7 +240,7 @@ function draw() {
     C.sort((a, b) => rank[a.verdict] - rank[b.verdict] || a.k - b.k || (b.t.waited ?? 0) - (a.t.waited ?? 0));
     $('#fNote').textContent = (to ? (leg != null ? `這一趟${kmText(from, to)}` : '這兩站之間的公里數沒有資料') + '；' : '') + `${maxKm < 9999 ? maxKm + ' 公里內' : ''}找到 ${C.length} 台` + (C.some(x => x.e) ? '（「約」是估算的公里數）' : '');
     table($('#cand'), [{ t: '車頭' }, { t: '司機' }, { t: '現在在' }, { t: '空車過來', n: 1 }, { t: '最快幾點到' }, { t: '可以用到' }, { t: to ? '夠不夠跑' : '已停', n: !to }],
-      C.slice(0, 12).map(x => [who(x.t), esc(x.t.drv), esc(x.atName), x.k ? `${x.e ? '約 ' : ''}${x.k} 公里` : '<span class="tag">就在這站</span>', hm(x.ready), x.until == null ? '今晚沒班了' : `${hm(x.until)} <span class="sub2">${esc(x.t.next.name)}</span>`, to ? (x.verdict ? `<span class="tag ${x.verdict === '夠' ? '' : 'w'}">${x.verdict}</span>` : '—') : dur(x.t.waited)]),
+      C.slice(0, 12).map(x => [who(x.t), esc(x.t.drv), esc(x.atName) + (x.t.st === 'pre' ? ' <span class="tag">還沒出車</span>' : x.t.sched ? ' <span class="tag">班表排的空檔</span>' : ''), x.k ? `${x.e ? '約 ' : ''}${x.k} 公里` : '<span class="tag">就在這站</span>', hm(x.ready), x.until == null ? '今晚沒班了' : `${hm(x.until)} <span class="sub2">${esc(x.t.next.name)}</span>`, to ? (x.verdict ? `<span class="tag ${x.verdict === '夠' ? '' : 'w'}">${x.verdict}</span>` : '—') : (x.t.st === 'pre' ? '—' : dur(x.t.waited))]),
       maxKm < 9999 ? `${maxKm} 公里內沒有空檔夠的車頭，可以把「最遠調車」放寬。` : '沒有空檔夠的車頭。');
   }
 
@@ -249,8 +253,8 @@ function draw() {
     table(host.querySelector('table'), heads, show, emptyText);
   };
   const two = (a, b) => `${esc(a)}<div class="sub2">${esc(b)}</div>`;      // 班次名稱一行、起迄站一行，欄位才不會太寬
-  list($('#aWait'), aWait.map(t => [who(t), esc(t.atName), dur(t.waited), two(hm(t.next.out), '往' + t.next.toName)]), [{ t: '車頭' }, { t: '站' }, { t: '已停', n: 1 }, { t: '下一班' }], '目前沒有。');
-  list($('#aOut'), aOut.map(t => [who(t), two(t.next.name, t.next.fromName + '→' + t.next.toName), hm(t.next.planOut), `<span class="tag w">${dur(now - t.next.planOut)}</span>`]), [{ t: '車頭' }, { t: '班次' }, { t: '表定' }, { t: '已晚', n: 1 }], '目前沒有。');
+  list($('#aWait'), aWait.map(t => [who(t), two(t.next.name, t.atName + '→' + t.next.toName), hm(t.next.planOut), `<span class="tag w">${dur(late(t))}</span>`]), [{ t: '車頭' }, { t: '下一班' }, { t: '表定' }, { t: '已晚', n: 1 }], '目前沒有。');
+  list($('#aOut'), aOut.map(t => [who(t), two(t.next.name, t.next.fromName + '→' + t.next.toName + (t.st === 'pre' ? '（已報到）' : '')), hm(t.next.planOut), `<span class="tag w">${dur(late(t))}</span>`]), [{ t: '車頭' }, { t: '首班' }, { t: '表定' }, { t: '已晚', n: 1 }], '目前沒有。');
   list($('#aIn'), aIn.map(t => [who(t), two(t.last.name, '往' + t.atName), hm(t.eta), `<span class="tag w">${dur(t.lateIn)}</span>`]), [{ t: '車頭' }, { t: '班次' }, { t: '預估進站' }, { t: '會晚', n: 1 }], '目前沒有。');
 }
 
