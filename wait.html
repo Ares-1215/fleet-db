@@ -36,7 +36,13 @@
 html,body{margin:0}
 body{background:var(--page);color:var(--ink);font:14px/1.55 system-ui,-apple-system,"Segoe UI","Microsoft JhengHei",sans-serif}
 .wrap{max-width:1240px;margin:0 auto;padding:20px 16px 64px}
-header h1{font-size:22px;margin:0 0 2px;font-weight:650}
+/* 三個網頁共用的主選單 */
+.hd{display:flex;gap:8px 18px;flex-wrap:wrap;align-items:center;margin-bottom:4px}
+.nav{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+.nav a,header .nav a{padding:5px 13px;border-radius:999px;color:var(--ink2);text-decoration:none;font-size:14px;border:1px solid var(--axis)}
+.nav a:hover,header .nav a:hover{color:var(--ink);text-decoration:none}
+.nav a[aria-current="page"],header .nav a[aria-current="page"]{background:var(--ink);color:var(--page);border-color:var(--ink);font-weight:600}
+header h1{font-size:22px;margin:0;font-weight:650}
 header .sub{color:var(--ink2);font-size:13px}
 header a{color:var(--s1);text-decoration:none}
 header a:hover{text-decoration:underline}
@@ -107,7 +113,7 @@ ul.plain li{margin:3px 0}
 <body>
 <div class="wrap">
 <header>
-  <h1>等待時間軸</h1>
+  <div class="hd"><h1>等待時間軸</h1><nav class="nav" aria-label="主選單"><a href="live.html">即時看板</a><a href="history.html" aria-current="page">歷史統計</a><a href="./">車頭與司機</a></nav></div>
   <div class="sub" id="hdr"></div>
 </header>
 <div id="gate" class="card" hidden>
@@ -119,10 +125,10 @@ ul.plain li{margin:3px 0}
 <nav class="tabs" role="tablist">
   <button role="tab" data-t="ov" aria-selected="true">總覽</button>
   <button role="tab" data-t="tl" aria-selected="false">站所時間軸</button>
-  <button role="tab" data-t="hm" aria-selected="false">站所 × 時段</button>
-  <button role="tab" data-t="rp" aria-selected="false">固定空窗</button>
+  <button role="tab" data-t="hm" aria-selected="false">各站幾點在等</button>
+  <button role="tab" data-t="rp" aria-selected="false">固定會等的車</button>
   <button role="tab" data-t="dt" aria-selected="false">明細</button>
-  <button role="tab" data-t="def" aria-selected="false">口徑說明</button>
+  <button role="tab" data-t="def" aria-selected="false">數字怎麼算</button>
 </nav>
 <div class="scope">
   <label>等待門檻 <select id="th"><option value="30">30 分以上</option><option value="60" selected>60 分以上</option><option value="90">90 分以上</option><option value="120">120 分以上</option></select></label>
@@ -135,7 +141,7 @@ ul.plain li{margin:3px 0}
   <div class="grid g4" id="tiles"></div>
 
   <h2>幾點最多車在等</h2>
-  <p class="note">每半小時「正在站內等待」的車頭數（只算停留達門檻的那幾筆），常態平日平均。</p>
+  <p class="note">每半小時「正在站內等待」的車頭數（只算停留達門檻的那幾筆），一般平日平均。</p>
   <div class="card chart"><h3>同一時間正在等待的車頭數</h3><div class="legend"><span><i class="l1"></i>實際（進離站紀錄）</span><span><i class="l2"></i>表定（運行表空檔）</span></div><div id="profile"></div></div>
 
   <h2>哪些站等最多</h2>
@@ -143,7 +149,7 @@ ul.plain li{margin:3px 0}
   <div class="tblwrap"><table id="stTable"></table></div>
 
   <h2>停留多久（所有停留）</h2>
-  <p class="note">不看門檻，車頭兩趟之間在站內的每一筆停留，依時間長短分組（常態平日每晚平均）。</p>
+  <p class="note">不看門檻，車頭兩趟之間在站內的每一筆停留，依時間長短分組（一般平日每晚平均）。</p>
   <div class="tblwrap"><table id="bandTable"></table></div>
 
   <h2>逐晚數字</h2>
@@ -169,7 +175,7 @@ ul.plain li{margin:3px 0}
 </section>
 
 <section id="hm" hidden>
-  <h2>站所 × 時段</h2>
+  <h2>各站幾點在等</h2>
   <p class="note" id="hmNote"></p>
   <div class="filters">
     <select id="hmSrc" aria-label="資料"><option value="a">實際（進離站紀錄）</option><option value="p">表定（運行表空檔）</option></select>
@@ -179,7 +185,7 @@ ul.plain li{margin:3px 0}
 </section>
 
 <section id="rp" hidden>
-  <h2>固定空窗</h2>
+  <h2>固定會等的車</h2>
   <p class="note" id="rpNote"></p>
   <div class="filters">
     <select id="rpShare" aria-label="出現比例"><option value="70" selected>七成以上的平日都出現</option><option value="50">五成以上的平日都出現</option><option value="90">九成以上的平日都出現</option></select>
@@ -202,7 +208,7 @@ ul.plain li{margin:3px 0}
 </section>
 
 <section id="def" hidden>
-  <h2>口徑說明</h2>
+  <h2>數字怎麼算</h2>
   <div class="card" id="defBody"></div>
 </section>
 </div>
@@ -223,7 +229,7 @@ const M = D.meta, Q = M.qa;
 const stName = c => (c + ' ' + (D.st[c] || '')).trim();
 const slotName = s => (s + ' ' + ((D.slots[s] || [])[0] || '')).trim();
 const KIND = { fixed: '固定', extra: '增開', flex: '機動', '': '' };
-// 統計範圍：常態平日；若這段期間沒有常態平日就用全部
+// 統計範圍：一般平日；若這段期間沒有一般平日就用全部
 const normalIdx = new Set(D.dates.map((d, i) => d.normal ? i : -1).filter(i => i >= 0));
 const useIdx = normalIdx.size ? normalIdx : new Set(D.dates.map((d, i) => i));
 const N = useIdx.size;
@@ -279,7 +285,7 @@ function drawOverview() {
   const hrs = a.reduce((s, x) => s + x.min, 0) / 60, phrs = p.reduce((s, x) => s + x.min, 0) / 60;
   const perNightSlots = [...useIdx].reduce((s, i) => s + new Set(a.filter(x => x.di === i).map(x => x.slot)).size, 0) / N;
   const ran = [...useIdx].reduce((s, i) => s + D.dates[i].withEv, 0) / N;
-  $('#ovNote').textContent = `統計 ${M.from} ～ ${M.to} 當中的 ${N} 個常態平日。「等待」指車頭出車後，在某一站從進站到離站的時間，含裝卸、掛櫃與空等，報表分不出哪一段是空等。`;
+  $('#ovNote').textContent = `統計 ${M.from} ～ ${M.to} 當中的 ${N} 個一般平日。「等待」指車頭出車後，在某一站從進站到離站的時間，含裝卸、掛櫃與空等，報表分不出哪一段是空等。`;
   $('#tiles').innerHTML =
     tile(`每晚等 ${TH} 分以上`, fmt(r1(a.length / N)), '筆', `表定 ${fmt(r1(p.length / N))} 筆`) +
     tile('每晚等待總時數', fmt(r1(hrs / N)), '小時', `表定 ${fmt(r1(phrs / N))} 小時`) +
@@ -319,7 +325,7 @@ function drawOverview() {
   table($('#bandTable'), [{ t: '停留時間' }, { t: '每晚筆數' }, { t: '占比', n: 1 }], lab.map((l, k) => [esc(l), `<span class="bar" style="width:${Math.round(b[k] / bm * 200)}px"></span>${fmt(r1(b[k]))}`, k < 5 ? r1(b[k] / (tot || 1) * 100) + '%' : '—']));
 
   // 逐晚
-  table($('#dayTable'), [{ t: '日期' }, { t: '常態平日' }, { t: '出車（台）', n: 1 }, { t: '有進離站紀錄', n: 1 }, { t: `等 ${TH} 分以上（筆）`, n: 1 }, { t: '等待時數', n: 1 }, { t: '涉及車頭', n: 1 }, { t: '表定筆數', n: 1 }, { t: '表定時數', n: 1 }],
+  table($('#dayTable'), [{ t: '日期' }, { t: '一般平日' }, { t: '出車（台）', n: 1 }, { t: '有進離站紀錄', n: 1 }, { t: `等 ${TH} 分以上（筆）`, n: 1 }, { t: '等待時數', n: 1 }, { t: '涉及車頭', n: 1 }, { t: '表定筆數', n: 1 }, { t: '表定時數', n: 1 }],
     D.dates.map((d, i) => { const x = A.filter(s => s.di === i && s.min >= TH), q = P.filter(s => s.di === i && s.min >= TH); return [dLabel(d), d.normal ? '是' : '否', fmt(d.ran), fmt(d.withEv), fmt(x.length), fmt(r1(x.reduce((s, v) => s + v.min, 0) / 60)), fmt(new Set(x.map(v => v.slot)).size), fmt(q.length), fmt(r1(q.reduce((s, v) => s + v.min, 0) / 60))]; }));
 }
 $('#stTable').addEventListener('click', e => { const tr = e.target.closest('tr.go'); if (tr) { $('#tlSt').value = tr.dataset.st; showTab('tl'); scrollTo(0, 0); } });
@@ -333,7 +339,7 @@ function fillStations() {
   if (!S.some(s => s.st === cur) && S.length) $('#tlSt').value = S[0].st;      // 預設選等待時數最多的站
   if (S.some(s => s.st === cur)) $('#tlSt').value = cur;
 }
-$('#tlDate').innerHTML = D.dates.map((d, i) => `<option value="${i}">${dLabel(d)}${d.normal ? '' : '　非常態'}</option>`).reverse().join('');
+$('#tlDate').innerHTML = D.dates.map((d, i) => `<option value="${i}">${dLabel(d)}${d.normal ? '' : '　非一般日'}</option>`).reverse().join('');
 function drawTimeline() {
   const st = $('#tlSt').value, di = +$('#tlDate').value, box = $('#ganttBox'); box.innerHTML = '';
   const a = A.filter(s => s.di === di && s.st === st && s.min >= TH), p = P.filter(s => s.di === di && s.st === st && s.min >= TH);
@@ -374,7 +380,7 @@ function drawHeat() {
   const src = $('#hmSrc').value === 'a' ? A : P, S = byStation().slice(0, 30), o = {};
   for (const s of src) { if (!useIdx.has(s.di) || s.min < TH) continue; const r = o[s.st] = o[s.st] || {}; for (let t = Math.floor(s.a / 60); t * 60 < s.b; t++) r[t % 24] = (r[t % 24] || 0) + (Math.min(s.b, t * 60 + 60) - Math.max(s.a, t * 60)) / 60 / N; }
   const mx = Math.max(...S.flatMap(s => HOURS.map(h => (o[s.st] || {})[h] || 0)), 0.01);
-  $('#hmNote').textContent = `每一格是那個小時內「平均同時有幾台車頭在這一站等」（只算停留 ${TH} 分以上的，${N} 個常態平日平均）。列出等待時數最多的 30 個站。`;
+  $('#hmNote').textContent = `每一格是那個小時內「平均同時有幾台車頭在這一站等」（只算停留 ${TH} 分以上的，${N} 個一般平日平均）。列出等待時數最多的 30 個站。`;
   $('#hmTable').innerHTML = '<thead><tr><th>站所</th>' + HOURS.map(h => `<th class="n" style="text-align:center">${String(h).padStart(2, '0')}</th>`).join('') + '<th class="n">每晚時數</th></tr></thead><tbody>' +
     S.map(s => { const r = o[s.st] || {}; const tot = Object.values(r).reduce((a, b) => a + b, 0); return `<tr><td>${esc(stName(s.st))}</td>` + HOURS.map(h => { const v = r[h] || 0, k = v <= 0.04 ? 0 : Math.max(1, Math.ceil(v / mx * 5)); return `<td class="h ${k ? 'h' + k : ''}" title="${String(h).padStart(2, '0')}:00 平均 ${r1(v)} 台">${v > 0.04 ? r1(v) : ''}</td>`; }).join('') + `<td class="n">${fmt(r1(tot))}</td></tr>`; }).join('') + '</tbody>';
 }
@@ -383,7 +389,7 @@ $('#hmSrc').oninput = drawHeat;
 /* ---------- 固定空窗：同一台車頭在同一站，多數平日都等超過門檻 ---------- */
 let rpRows = [];
 const rpCols = [
-  { t: '車頭', v: x => slotName(x.slot) }, { t: '類型', v: x => KIND[(D.slots[x.slot] || [])[2] || ''] }, { t: '組別', v: x => (D.slots[x.slot] || [])[1] || '' },
+  { t: '車頭', v: x => slotName(x.slot) }, { t: '類型', v: x => KIND[(D.slots[x.slot] || [])[2] || ''] }, { t: '車隊', v: x => (D.slots[x.slot] || [])[1] || '' },
   { t: '站所', v: x => stName(x.st) }, { t: '出現晚數', n: 1, v: x => x.days.size + ' / ' + N }, { t: '每晚次數', n: 1, v: x => r1(x.n / x.days.size) }, { t: '平均進站', v: x => hm(x.a / x.n) }, { t: '平均離站', v: x => hm(x.b / x.n) },
   { t: '平均等待（分）', n: 1, v: x => Math.round(x.m / x.n) }, { t: '每晚等待時數', n: 1, v: x => r1(x.m / 60 / N) },
 ];
@@ -397,7 +403,7 @@ function drawRepeat() {
   if (cnt[cur]) $('#rpSt').value = cur;
   rpRows = all.filter(x => !$('#rpSt').value || x.st === $('#rpSt').value);
   const hrs = all.reduce((s, x) => s + x.m, 0) / 60 / N, tot = A.filter(s => useIdx.has(s.di) && s.min >= TH).reduce((s, x) => s + x.min, 0) / 60 / N;
-  $('#rpNote').textContent = `同一台車頭、在同一站，${N} 個常態平日裡有 ${share}% 以上的晚上都等了 ${TH} 分以上：共 ${all.length} 組，合計每晚約 ${r1(hrs)} 小時，占全部等待的 ${Math.round(hrs / (tot || 1) * 100)}%。這些空窗最固定，最容易事先排進加班車或調整班表。點任一列可以看那一站最近一晚的時間軸。`;
+  $('#rpNote').textContent = `同一台車頭、在同一站，${N} 個一般平日裡有 ${share}% 以上的晚上都等了 ${TH} 分以上：共 ${all.length} 組，合計每晚約 ${r1(hrs)} 小時，占全部等待的 ${Math.round(hrs / (tot || 1) * 100)}%。這些空窗最固定，最容易事先排進加班車或調整班表。點任一列可以看那一站最近一晚的時間軸。`;
   $('#rpCount').textContent = `${fmt(rpRows.length)} 組`;
   table($('#rpTable'), rpCols, rpRows.map(x => rpCols.map(c => esc(c.v(x)))), i => `class="go" tabindex="0" data-st="${rpRows[i].st}" data-di="${rpRows[i].last}"`);
 }
@@ -436,8 +442,8 @@ $('#dtQ').oninput = drawDetail; $('#dtDate').oninput = drawDetail;
 $('#dtCsv').onclick = () => { const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"'; const body = [dCols.map(c => q(c.t)).join(',')].concat(dRows.map(r => dCols.map(c => q(c.v(r))).join(','))).join('\r\n'); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + body], { type: 'text/csv' })); a.download = '等待明細.csv'; a.click(); URL.revokeObjectURL(a.href); };
 
 /* ---------- 口徑 ---------- */
-$('#hdr').innerHTML = `資料：報表平台「車頭進離站紀錄」＋「運行表車頭空檔」 ${M.from} ～ ${M.to}（${M.nights} 晚） · 產生時間 ${M.built} · 內部資料，含司機姓名，請勿外傳 · <a href="./">車頭資源庫</a> · <a href="live.html">即時看板</a>`;
-$('#scopeNote').textContent = normalIdx.size ? `平均值以 ${N} 個常態平日計算` : `這段期間沒有常態平日，平均值以全部 ${N} 晚計算`;
+$('#hdr').innerHTML = `<a href="history.html">‹ 回歷史統計</a> · 資料：報表平台「車頭進離站紀錄」＋「運行表車頭空檔」 ${M.from} ～ ${M.to}（${M.nights} 晚） · 產生時間 ${M.built} · 內部資料，含司機姓名，請勿外傳`;
+$('#scopeNote').textContent = normalIdx.size ? `平均值以 ${N} 個一般平日計算` : `這段期間沒有一般平日，平均值以全部 ${N} 晚計算`;
 $('#defBody').innerHTML = `<ul class="plain">
 <li><b>實際</b>：HCT 報表查詢平台「【運務】車頭進離站紀錄查詢」，進站多為電子圍籬、離站多為司機 APP。這段期間共查 ${fmt(Q.tractors)} 台次，取得 ${fmt(Q.events)} 筆事件（電子圍籬 ${fmt(Q.fence)}、APP ${fmt(Q.app)}、異常回報 ${fmt(Q.abn)}）；${fmt(Q.noEvents)} 台次沒有任何紀錄。</li>
 <li><b>表定</b>：「【運務】運行表車頭空檔查詢」（測試區），車頭在某站從規定進站時間到下一班規定離站時間。</li>
@@ -445,7 +451,7 @@ $('#defBody').innerHTML = `<ul class="plain">
 <li><b>等待</b>：車頭當晚已經離過站之後的停留才算；出車前在起站的停留（${fmt(Q.pre)} 筆）不算。最後一次進站後沒有再離站視為收班。</li>
 <li><b>超過 ${M.maxWait} 分</b>：視為下班或分段出勤，不算等待（${fmt(Q.over)} 筆）。</li>
 <li><b>等待不等於空等</b>：停留時間含卸櫃、裝櫃、掛櫃與休息，報表分不出來。門檻設 60 分以上，是把一般作業時間大致排除。</li>
-<li><b>常態平日</b>：沿用車頭資源庫的口徑（週一到週五，且當天出車數不低於同星期中位數的 70%）。</li>
+<li><b>一般平日</b>：跟「車頭與司機」同一個算法（週一到週五，且當天出車數不低於同星期中位數的 70%）。</li>
 <li><b>行駛日</b>：一晚從當天下午算到隔天上午，時間軸上 00:00 之後是隔天凌晨。</li>
 <li><b>網頁只帶 ${M.minKeep} 分以上的停留</b>，更短的只有筆數統計。</li>
 </ul>`;

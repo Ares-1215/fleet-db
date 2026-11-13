@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>歷史統計</title>
+<style>
+:root{
+  color-scheme: light;
+  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10); --wash:rgba(11,11,11,.035);
+  --s1:#2a78d6; --s1-soft:#cde2fb; --s2:#eb6834; --warn:#d03b3b; --warn-soft:rgba(208,59,59,.10);
+}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme="light"])){
+    color-scheme: dark;
+    --page:#0d0d0d; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10); --wash:rgba(255,255,255,.05);
+    --s1:#3987e5; --s1-soft:#0d366b; --s2:#d95926; --warn:#e66767; --warn-soft:rgba(230,103,103,.14);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --page:#0d0d0d; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10); --wash:rgba(255,255,255,.05);
+  --s1:#3987e5; --s1-soft:#0d366b; --s2:#d95926; --warn:#e66767; --warn-soft:rgba(230,103,103,.14);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{background:var(--page);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI","Microsoft JhengHei",sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:16px 16px 56px}
+header{display:flex;gap:8px 18px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+header h1{font-size:22px;margin:0;font-weight:650}
+header .sub{color:var(--ink2);font-size:13px;flex-basis:100%}
+a{color:var(--s1)}
+/* 三個網頁共用的主選單 */
+.nav{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+.nav a{padding:5px 13px;border-radius:999px;color:var(--ink2);text-decoration:none;font-size:14px;border:1px solid var(--axis)}
+.nav a:hover{color:var(--ink)}
+.nav a[aria-current="page"]{background:var(--ink);color:var(--page);border-color:var(--ink);font-weight:600}
+:focus-visible{outline:2px solid var(--s1);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;min-width:0}
+.bar{display:flex;gap:8px 12px;flex-wrap:wrap;align-items:center;margin-bottom:12px;font-size:13.5px;color:var(--ink2)}
+.seg{display:inline-flex;border:1px solid var(--axis);border-radius:8px;overflow:hidden}
+.seg button{font:inherit;font-size:13.5px;color:var(--ink2);background:var(--surface);border:0;padding:6px 12px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--axis)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--page)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:14px}
+a.tile{display:block;color:inherit;text-decoration:none;transition:border-color .15s}
+a.tile:hover{border-color:var(--s1)}
+.tile .lab{color:var(--ink2);font-size:13.5px}
+.tile .val{font-size:30px;font-weight:650;line-height:1.2}
+.tile .val small{font-size:14px;font-weight:500;color:var(--ink2);margin-left:3px}
+.tile .ctx{color:var(--muted);font-size:12.5px}
+.tile .go{color:var(--s1);font-size:13px;margin-top:4px}
+section.card{margin-bottom:14px;scroll-margin-top:12px}
+h2{font-size:18px;margin:0 0 2px;font-weight:650}
+h3{font-size:14.5px;margin:16px 0 6px;font-weight:650}
+.hint{color:var(--ink2);font-size:13px;margin:0 0 10px}
+.lead{font-size:15.5px;margin:0 0 12px;max-width:62em}
+.lead b{font-weight:650}
+.chart{position:relative;margin-bottom:4px}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart text{font:11.5px system-ui,"Microsoft JhengHei",sans-serif;fill:var(--muted)}
+.legend{display:flex;gap:6px 16px;flex-wrap:wrap;font-size:12.5px;color:var(--ink2);margin:0 0 6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.tip{position:fixed;z-index:9;pointer-events:none;background:var(--ink);color:var(--page);font-size:12.5px;line-height:1.45;padding:6px 9px;border-radius:7px;max-width:240px;white-space:nowrap}
+.scroll{overflow:auto;border:1px solid var(--grid);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:6px 10px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--grid)}
+tbody tr:last-child td{border-bottom:0}
+th{color:var(--ink2);font-weight:600;font-size:12.5px;background:var(--surface);position:sticky;top:0}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.off td{color:var(--muted)}
+.more{display:inline-block;margin-top:10px;font-size:13.5px}
+details{margin-bottom:14px}
+details>summary{cursor:pointer;font-weight:650;font-size:16px;padding:4px 0}
+details ul{margin:8px 0 0;padding-left:1.3em;max-width:64em}
+details li{margin-bottom:5px}
+.empty{color:var(--muted);font-size:13.5px;padding:14px 4px}
+.locked .tiles,.locked .bar,.locked section,.locked details{display:none}
+#gate{max-width:380px;margin:48px auto}
+#gate form{display:flex;gap:8px;margin-top:12px}
+#gate input{flex:1;min-width:0;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--axis);border-radius:8px;padding:6px 10px}
+#gate button{font:inherit;color:#fff;background:var(--s1);border:0;border-radius:8px;padding:8px 16px;cursor:pointer}
+#gate .msg{color:var(--ink2);font-size:13px;margin-top:10px;min-height:1.5em}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>歷史統計</h1>
+  <nav class="nav" aria-label="主選單"><a href="live.html">即時看板</a><a href="history.html" aria-current="page">歷史統計</a><a href="./">車頭與司機</a></nav>
+  <span class="sub" id="hdr"></span>
+</header>
+<div id="gate" class="card" hidden>
+  <h2>請輸入通行碼</h2>
+  <form><input type="password" inputmode="numeric" autocomplete="off" aria-label="通行碼" placeholder="通行碼"><button type="submit">進入</button></form>
+  <div class="msg" role="status"></div>
+</div>
+
+<div class="bar">
+  <span>期間</span><span class="seg" id="win" role="group" aria-label="期間"></span>
+  <span id="winNote"></span>
+</div>
+
+<div class="tiles" id="tiles"></div>
+
+<section class="card" id="secWait">
+  <h2>等待</h2>
+  <p class="hint">車頭在同一站，從進站到下一趟離站，等了 1 到 6 小時的（含裝卸、掛櫃與空等）。</p>
+  <p class="lead" id="lWait"></p>
+  <div class="chart" id="cWait"></div>
+  <h3>哪一站等最多</h3>
+  <div class="scroll"><table id="tWait"></table></div>
+  <a class="more" href="wait.html">看每一站幾點在等、哪些車頭固定在等 ›</a>
+</section>
+
+<section class="card" id="secEmpty">
+  <h2>空車空櫃里程</h2>
+  <p class="hint">沒有載貨的里程：拉空櫃，或只有車頭沒拉櫃。每晚數字取自行駛日報。</p>
+  <p class="lead" id="lEmpty"></p>
+  <div class="legend"><span><i style="background:var(--s1)"></i>拉空櫃</span><span><i style="background:var(--s2)"></i>只有車頭</span></div>
+  <div class="chart" id="cEmpty"></div>
+  <h3>哪些路段空跑最多</h3>
+  <div class="scroll"><table id="tEmpty"></table></div>
+</section>
+
+<section class="card" id="secLate">
+  <h2>準點</h2>
+  <p class="hint">有表定時間的班次，實際離站比表定晚 30 分以上算「晚出發」，實際進站比表定晚 30 分以上算「晚到」。</p>
+  <p class="lead" id="lLate"></p>
+  <div class="chart" id="cLate"></div>
+  <h3>哪裡最常晚出發 <span class="seg" id="lateBy" role="group" aria-label="排行方式" style="margin-left:8px;vertical-align:middle"><button type="button" data-v="st" aria-pressed="true">看出發站</button><button type="button" data-v="trip" aria-pressed="false">看班次</button></span></h3>
+  <div class="scroll"><table id="tLate"></table></div>
+</section>
+
+<section class="card" id="secOt">
+  <h2>加班</h2>
+  <p class="hint">班次名稱有「加班」的班次，以實際有出發的為準。</p>
+  <p class="lead" id="lOt"></p>
+  <div class="chart" id="cOt"></div>
+  <h3>哪些路線最常加班</h3>
+  <div class="scroll"><table id="tOt"></table></div>
+</section>
+
+<details id="dNights">
+  <summary>逐晚數字</summary>
+  <div class="scroll" style="max-height:70vh;margin-top:8px"><table id="tNights"></table></div>
+</details>
+
+<details>
+  <summary>數字怎麼算</summary>
+  <ul>
+    <li><b>一般平日</b>：週一到週五，而且當晚出車台數不低於同星期平常的七成（扣掉春節、連假、颱風這類特別少的日子）。平均值只算一般平日，圖上淺色的是週末與其他日子。</li>
+    <li><b>等待</b>：同一台車頭在同一站，從「進站」到「下一趟離站」的時間，1 小時以上、6 小時以內才算（超過 6 小時當作下班或分段出勤）。含裝卸、掛櫃與空等，目前分不出哪一段是空等。</li>
+    <li><b>空車空櫃里程</b>：行駛日報裡的「空櫃里程」加「空車頭里程」；占比是除以（空櫃＋空車頭＋重櫃）。路段排行是依班次名稱判斷（名稱有「空」字算拉空櫃、沒有名稱的移動算只有車頭），會比行駛日報的數字少一些，只用來看哪些路段多。</li>
+    <li><b>晚出發、晚到</b>：30 分的標準跟公司「班次即時監控警示」的「晚放車」「延誤進站」一樣。只比有表定時間的班次；臨時加開、沒有表定時間的不列入。前一班晚到，下一班通常跟著晚出發，所以同一台車的幾班可能都算晚。</li>
+    <li><b>加班</b>：班次名稱有「加班」而且實際有離站的班次。「封櫃後多久出發」＝離站時間減封櫃時間，取中位數（一半的班次比這個久）。「原地的車」＝前一趟剛好停在加班的出發站；「空車調來」＝前一趟是空車或空櫃開到加班的出發站。</li>
+    <li><b>超過 1 小時沒派到車</b>：公司「班次即時監控警示」當晚發出「貨櫃已傳輸但尚未指派」警示的加班櫃數。</li>
+    <li><b>資料來源</b>：班次的表定與實際時間來自公司「班次即時監控警示」背後的班次清單（跟即時看板同一個來源）；出車台數與里程來自報表平台的行駛日報明細。每天中午過後補進前一晚。</li>
+  </ul>
+</details>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+const EMBED = /*__DATA__*/null, ONLINE = {"fn":"https://hmqnlovyzlvvnkqmfwtt.supabase.co/functions/v1/fleetdb","key":"hist"};
+const $ = s => document.querySelector(s);
+const fmt = (n, d = 0) => n == null || isNaN(n) ? '—' : Number(n).toLocaleString('zh-TW', { minimumFractionDigits: d, maximumFractionDigits: d });
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const WD = '日一二三四五六';
+const sum = (a, f) => a.reduce((s, x) => s + f(x), 0);
+const wan = k => fmt(k / 10000, 1);                       // 公里 → 萬公里
+const pct = (a, b) => b ? a / b * 100 : 0;
+const emptyPct = x => pct(x.kmBox + x.kmBob, x.kmBox + x.kmBob + x.kmLoad);
+let D = null, win = '', lateBy = 'st';
+
+const table = (host, heads, rows, emptyText) => { host.innerHTML = rows.length ? '<thead><tr>' + heads.map(h => `<th class="${h.n ? 'n' : ''}">${esc(h.t)}</th>`).join('') + '</tr></thead><tbody>' + rows.map(r => `<tr class="${r.cls || ''}">` + r.map((c, i) => `<td class="${heads[i].n ? 'n' : ''}">${c}</td>`).join('') + '</tr>').join('') + '</tbody>' : `<tbody><tr><td class="empty">${esc(emptyText || '這段期間沒有資料。')}</td></tr></tbody>`; };
+
+/* ---------- 每晚一根的長條圖：一般平日用主色、其他日子淺色；虛線是一般平日的平均 ---------- */
+// series：[{ color, get(night) }]（兩個以上就疊起來）；tipText(night) 回傳滑過去要顯示的文字
+function bars(host, rows, series, opt) {
+  const W = Math.max(300, host.clientWidth || 900), H = 210, mL = 44, mR = 8, mT = 10, mB = 22, pw = W - mL - mR, ph = H - mT - mB;
+  const tot = r => sum(series, s => s.get(r) || 0);
+  const max = Math.max(1e-9, ...rows.map(tot));
+  const step = (() => { const raw = max / 4, p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10) * p; })();
+  const top = Math.ceil(max / step) * step, y = v => mT + ph - v / top * ph;
+  // 晚數少的時候長條不要撐太寬（每根最多 36）
+  const band = Math.min(pw / rows.length, 36), gap = band >= 7 ? 2 : band >= 4 ? 1 : 0, bw = Math.max(1, band - gap), rad = bw >= 6 ? 2 : 0;
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${esc(opt.label)}（詳細數字見下方「逐晚數字」）">`;
+  for (let v = 0; v <= top + 1e-9; v += step) s += `<line x1="${mL}" x2="${W - mR}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)" stroke-width="1"/><text x="${mL - 6}" y="${y(v) + 4}" text-anchor="end">${esc(opt.axis ? opt.axis(v) : fmt(v))}</text>`;
+  let lastLab = -1e9;
+  rows.forEach((r, i) => {
+    const x = mL + i * band + gap / 2; let base = 0;
+    series.forEach(q => { const v = q.get(r) || 0; if (v <= 0) return; const y1 = y(base + v), h = Math.max(0, y(base) - y1 - (base > 0 ? 2 : 0)); s += `<rect x="${x.toFixed(1)}" y="${y1.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="${rad}" fill="${q.color}" opacity="${r.normal ? 1 : .38}"/>`; base += v; });
+    if (r.w === 1 && x - lastLab > 46) { s += `<text x="${(x + bw / 2).toFixed(1)}" y="${H - 6}" text-anchor="middle">${+r.d.slice(5, 7)}/${+r.d.slice(8)}</text>`; lastLab = x; }
+  });
+  if (opt.avg != null) s += `<line x1="${mL}" x2="${W - mR}" y1="${y(opt.avg)}" y2="${y(opt.avg)}" stroke="var(--ink2)" stroke-width="1" stroke-dasharray="4 3"/><text x="${W - mR}" y="${y(opt.avg) - 5}" text-anchor="end" style="fill:var(--ink2)">一般平日平均 ${esc(opt.avgText)}</text>`;
+  rows.forEach((r, i) => { s += `<rect class="hit" data-i="${i}" x="${(mL + i * band).toFixed(1)}" y="${mT}" width="${band.toFixed(1)}" height="${ph}" fill="transparent"/>`; });
+  host.innerHTML = s + '</svg>';
+  const tip = $('#tip');
+  host.onpointermove = e => {
+    const h = e.target.closest('.hit'); if (!h) { tip.hidden = true; return; }
+    const r = rows[+h.dataset.i];
+    tip.innerHTML = `<b>${+r.d.slice(5, 7)}/${+r.d.slice(8)}（${WD[r.w]}）</b>${r.normal ? '' : '　不算一般平日'}<br>${opt.tip(r)}`; tip.hidden = false;
+    const tw = tip.offsetWidth, th = tip.offsetHeight; tip.style.left = Math.max(6, Math.min(innerWidth - tw - 6, e.clientX + 12)) + 'px'; tip.style.top = Math.max(6, e.clientY - th - 12) + 'px';
+  };
+  host.onpointerleave = () => { tip.hidden = true; };
+}
+
+function draw() {
+  const M = D.meta, w = M.windows.find(x => x.id === win) || M.windows[0];
+  const rows = D.nights.slice(-w.n), nn = rows.filter(x => x.normal), n = nn.length || 1, av = f => sum(nn, f) / n;
+  const R = D.rank[w.id];
+  $('#winNote').textContent = `${rows[0].d.slice(5).replace('-', '/')} ～ ${rows[rows.length - 1].d.slice(5).replace('-', '/')}，共 ${rows.length} 晚；平均只算其中 ${nn.length} 個一般平日`;
+  // 四個主題的平均（一般平日每晚）
+  const wH = av(x => x.wMin) / 60, wCars = av(x => x.wCars), wN = av(x => x.wN);
+  const kmAll = av(x => x.kmBox + x.kmBob + x.kmLoad), kmBox = av(x => x.kmBox), kmBob = av(x => x.kmBob), eP = pct(kmBox + kmBob, kmAll);
+  const oB = av(x => x.outBase), oL = av(x => x.outLate), oP = pct(oL, oB), oMin = sum(nn, x => x.outLate) ? sum(nn, x => x.outLateMin) / sum(nn, x => x.outLate) : 0, iP = pct(av(x => x.inLate), av(x => x.inBase));
+  const ot = av(x => x.ot), otKm = av(x => x.otKm), lags = nn.map(x => x.otLag).filter(x => x != null).sort((a, b) => a - b), lag = lags.length ? lags[lags.length >> 1] : null;
+  const moved = av(x => x.otMoved), local = av(x => x.otLocal), movedKm = av(x => x.otMovedKm), na = av(x => x.noAssign);
+
+  const tile = (lab, val, unit, ctx, to) => `<a class="card tile" href="#${to}"><div class="lab">${esc(lab)}</div><div class="val">${val}<small>${esc(unit)}</small></div><div class="ctx">${ctx}</div><div class="go">看明細 ›</div></a>`;
+  $('#tiles').innerHTML =
+    tile('等待', fmt(wH), '小時／晚', `每晚 ${fmt(wCars)} 台車頭等了 1 小時以上`, 'secWait') +
+    tile('空車空櫃里程', fmt(eP, 1), '%', `每晚 ${wan(kmBox + kmBob)} 萬公里沒有載貨`, 'secEmpty') +
+    tile('晚出發', fmt(oP), '%', `每晚 ${fmt(oL)} 班晚 30 分以上；晚到 ${fmt(iP)}%`, 'secLate') +
+    tile('加班', fmt(ot), '班／晚', lag == null ? '' : `櫃封好後，一半要等 ${fmt(lag)} 分以上才出發`, 'secOt');
+
+  // ---- 等待 ----
+  $('#lWait').innerHTML = `一般平日每晚有 <b>${fmt(wCars)} 台</b>車頭在站內等了 1 小時以上，共 ${fmt(wN)} 次、合計 <b>${fmt(wH)} 小時</b>，平均一次等 ${fmt(wN ? wH * 60 / wN : 0)} 分。`;
+  bars($('#cWait'), rows, [{ color: 'var(--s1)', get: x => x.wMin / 60 }], { label: '每晚等待小時', avg: wH, avgText: fmt(wH) + ' 小時', tip: x => `等待 ${fmt(x.wMin / 60)} 小時<br>${fmt(x.wN)} 次、${fmt(x.wCars)} 台車頭` });
+  table($('#tWait'), [{ t: '站所' }, { t: '每晚等待（小時）', n: 1 }, { t: '每晚幾次', n: 1 }, { t: '平均一次（分）', n: 1 }], R.waitSt.map(r => [esc(r[0] + r[1]), fmt(r[2], 1), fmt(r[3], 1), fmt(r[4])]));
+
+  // ---- 空車空櫃里程 ----
+  $('#lEmpty').innerHTML = `一般平日每晚跑 ${wan(kmAll)} 萬公里，其中 <b>${wan(kmBox + kmBob)} 萬公里（${fmt(eP, 1)}%）</b>沒有載貨：拉空櫃 ${wan(kmBox)} 萬、只有車頭 ${wan(kmBob)} 萬。`;
+  bars($('#cEmpty'), rows, [{ color: 'var(--s1)', get: x => x.kmBox / 10000 }, { color: 'var(--s2)', get: x => x.kmBob / 10000 }], { label: '每晚空車空櫃里程（萬公里）', axis: v => fmt(v, v < 1 && v > 0 ? 1 : 0) + ' 萬', avg: (kmBox + kmBob) / 10000, avgText: wan(kmBox + kmBob) + ' 萬公里', tip: x => `拉空櫃 ${wan(x.kmBox)} 萬公里<br>只有車頭 ${wan(x.kmBob)} 萬公里<br>占當晚里程 ${fmt(emptyPct(x), 1)}%` });
+  table($('#tEmpty'), [{ t: '路段' }, { t: '類型' }, { t: '每晚幾趟', n: 1 }, { t: '每晚公里', n: 1 }, { t: '其中臨時加開', n: 1 }], R.emptyRt.map(r => [`${esc(r[0])} → ${esc(r[1])}`, r[2] === '空櫃' ? '拉空櫃' : '只有車頭', fmt(r[3], 1), fmt(r[4]), fmt(r[5]) + '%']));
+
+  // ---- 準點 ----
+  $('#lLate').innerHTML = `一般平日每晚 ${fmt(oB)} 班有表定時間的班次裡，<b>${fmt(oL)} 班（${fmt(oP)}%）晚出發 30 分以上</b>，平均晚 ${fmt(oMin)} 分；晚到 30 分以上的占 ${fmt(iP)}%。`;
+  bars($('#cLate'), rows, [{ color: 'var(--s1)', get: x => pct(x.outLate, x.outBase) }], { label: '每晚晚出發的比例', axis: v => fmt(v) + '%', avg: oP, avgText: fmt(oP) + '%', tip: x => `晚出發 ${fmt(x.outLate)}／${fmt(x.outBase)} 班（${fmt(pct(x.outLate, x.outBase))}%）<br>晚到 ${fmt(x.inLate)}／${fmt(x.inBase)} 班（${fmt(pct(x.inLate, x.inBase))}%）` });
+  if (lateBy === 'st') table($('#tLate'), [{ t: '出發站' }, { t: '每晚出發（班）', n: 1 }, { t: '每晚晚出發（班）', n: 1 }, { t: '比例', n: 1 }, { t: '平均晚（分）', n: 1 }], R.lateSt.map(r => [esc(r[0] + r[1]), fmt(r[2], 1), fmt(r[3], 1), fmt(r[4]) + '%', fmt(r[5])]));
+  else table($('#tLate'), [{ t: '班次' }, { t: '起迄' }, { t: '有跑的晚數', n: 1 }, { t: '晚出發的晚數', n: 1 }, { t: '比例', n: 1 }, { t: '平均晚（分）', n: 1 }], R.lateTrip.map(r => [`${esc(r[0])} ${esc(r[1])}`, `${esc(r[2])} → ${esc(r[3])}`, fmt(r[4]), fmt(r[5]), fmt(r[6]) + '%', fmt(r[7])]), '這段期間還不夠長，排不出班次。');
+
+  // ---- 加班 ----
+  $('#lOt').innerHTML = `一般平日每晚 <b>${fmt(ot)} 班</b>加班、共 ${wan(otKm)} 萬公里。` + (lag == null ? '' : `櫃封好之後，一半的加班要等 <b>${fmt(lag)} 分</b>以上才出發；`) + `每晚有 ${fmt(na)} 個加班櫃超過 1 小時沒派到車。跑加班的車有 <b>${fmt(pct(moved, ot))}%</b> 是空車調來的（每晚為此多跑 ${fmt(movedKm)} 公里），${fmt(pct(local, ot))}% 是原本就停在那一站的車。`;
+  bars($('#cOt'), rows, [{ color: 'var(--s1)', get: x => x.ot }], { label: '每晚加班班數', avg: ot, avgText: fmt(ot) + ' 班', tip: x => `加班 ${fmt(x.ot)} 班、${fmt(x.otKm)} 公里<br>封櫃後 ${x.otLag == null ? '—' : fmt(x.otLag) + ' 分'}出發（中位數）<br>空車調來 ${fmt(x.otMoved)} 班、原地的車 ${fmt(x.otLocal)} 班<br>超過 1 小時沒派到車 ${fmt(x.noAssign)} 個櫃` });
+  table($('#tOt'), [{ t: '路線' }, { t: '每晚幾班', n: 1 }, { t: '每晚公里', n: 1 }, { t: '封櫃後多久出發（分）', n: 1 }, { t: '空車調來', n: 1 }], R.otRt.map(r => [`${esc(r[0])} → ${esc(r[1])}`, fmt(r[2], 1), fmt(r[3]), r[4] == null ? '—' : fmt(r[4]), fmt(r[5]) + '%']));
+
+  // ---- 逐晚數字 ----
+  table($('#tNights'), [{ t: '日期' }, { t: '出車（台）', n: 1 }, { t: '里程（萬公里）', n: 1 }, { t: '等待（小時）', n: 1 }, { t: '等待的車頭（台）', n: 1 }, { t: '空車空櫃', n: 1 }, { t: '晚出發', n: 1 }, { t: '晚到', n: 1 }, { t: '加班（班）', n: 1 }, { t: '封櫃後多久出發', n: 1 }, { t: '沒派到車（櫃）', n: 1 }],
+    [...rows].reverse().map(x => Object.assign([`${x.d.slice(5).replace('-', '/')}（${WD[x.w]}）${x.normal ? '' : ' 不算一般平日'}`, fmt(x.ran), wan(x.km), fmt(x.wMin / 60), fmt(x.wCars), fmt(emptyPct(x), 1) + '%', fmt(pct(x.outLate, x.outBase)) + '%', fmt(pct(x.inLate, x.inBase)) + '%', fmt(x.ot), x.otLag == null ? '—' : fmt(x.otLag) + ' 分', fmt(x.noAssign)], { cls: x.normal ? '' : 'off' })));
+}
+
+function boot(d) {
+  D = d; const M = D.meta; win = M.windows[0].id;
+  $('#hdr').innerHTML = `資料 ${esc(M.from)} ～ ${esc(M.to)}（${M.nights} 晚） · 產生時間 ${esc(M.built)} · 內部資料，請勿外傳`;
+  $('#win').innerHTML = M.windows.map(w => `<button type="button" data-v="${w.id}" aria-pressed="${w.id === win}">${esc(w.label)}</button>`).join('');
+  $('#win').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; win = b.dataset.v; document.querySelectorAll('#win button').forEach(x => x.setAttribute('aria-pressed', x === b)); draw(); });
+  $('#lateBy').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; lateBy = b.dataset.v; document.querySelectorAll('#lateBy button').forEach(x => x.setAttribute('aria-pressed', x === b)); draw(); });
+  draw();
+  // 版面寬度變了（轉向、縮放視窗）就重畫圖，字才不會被縮小
+  let timer = 0, lastW = $('#cWait').clientWidth;
+  const onSize = () => { const w = $('#cWait').clientWidth; if (!w || w === lastW) return; lastW = w; clearTimeout(timer); timer = setTimeout(draw, 120); };
+  if (window.ResizeObserver) new ResizeObserver(onSize).observe($('#cWait')); else addEventListener('resize', onSize);
+}
+
+/* ---------- 啟動：本機版直接用內嵌資料；線上版先驗通行碼再向後端取資料 ---------- */
+async function loadOnline(code) {
+  const r = await fetch(ONLINE.fn, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'get', code, key: ONLINE.key }) });
+  if (r.status === 401) throw new Error('通行碼錯誤');
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || ('讀取失敗（' + r.status + '）'));
+  const bin = Uint8Array.from(atob(j.data), c => c.charCodeAt(0));
+  return JSON.parse(await new Response(new Blob([bin]).stream().pipeThrough(new DecompressionStream('gzip'))).text());
+}
+(function start() {
+  if (EMBED) return boot(EMBED);
+  const gate = document.getElementById('gate'), form = gate.querySelector('form'), msg = gate.querySelector('.msg'), inp = gate.querySelector('input'), btn = gate.querySelector('button');
+  const store = { get() { try { return sessionStorage.getItem('fd_code') || ''; } catch (e) { return ''; } }, set(v) { try { v ? sessionStorage.setItem('fd_code', v) : sessionStorage.removeItem('fd_code'); } catch (e) {} } };
+  async function go(code) {
+    msg.textContent = '讀取資料中…'; btn.disabled = true;
+    try { const d = await loadOnline(code); store.set(code); gate.hidden = true; document.body.classList.remove('locked'); boot(d); }
+    catch (e) { store.set(''); msg.textContent = e.message || '讀取失敗'; btn.disabled = false; inp.value = ''; inp.focus(); }
+  }
+  document.body.classList.add('locked'); gate.hidden = false;
+  form.addEventListener('submit', e => { e.preventDefault(); const v = inp.value.trim(); if (v) go(v); });
+  const saved = store.get(); if (saved) go(saved); else inp.focus();
+})();
+</script>
+</body>
+</html>

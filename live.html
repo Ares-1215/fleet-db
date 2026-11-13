@@ -30,12 +30,19 @@
 html,body{margin:0}
 body{background:var(--page);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI","Microsoft JhengHei",sans-serif}
 .wrap{max-width:1360px;margin:0 auto;padding:16px 16px 48px}
-header{display:flex;gap:6px 20px;flex-wrap:wrap;align-items:baseline;margin-bottom:12px}
+header{display:flex;gap:6px 20px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
 header h1{font-size:22px;margin:0;font-weight:650}
 header .sub{color:var(--ink2);font-size:13.5px}
 header a{color:var(--s1);text-decoration:none}
 header a:hover{text-decoration:underline}
 header .sp{margin-left:auto}
+.hrow{flex-basis:100%;display:flex;gap:6px 16px;flex-wrap:wrap;align-items:center}
+/* 三個網頁共用的主選單 */
+.nav{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+.nav a,header .nav a{padding:5px 13px;border-radius:999px;color:var(--ink2);text-decoration:none;font-size:14px;border:1px solid var(--axis)}
+.nav a:hover,header .nav a:hover{color:var(--ink);text-decoration:none}
+.nav a[aria-current="page"],header .nav a[aria-current="page"]{background:var(--ink);color:var(--page);border-color:var(--ink);font-weight:600}
+
 select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--axis);border-radius:8px;padding:6px 10px}
 :focus-visible{outline:2px solid var(--s1);outline-offset:2px}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:14px}
@@ -88,8 +95,8 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 <div class="wrap">
 <header>
   <h1>指揮中心即時看板</h1>
-  <span class="sub"><span id="asof"></span> · 內部資料，請勿外傳 · <a href="./">車頭資源庫</a> · <a href="wait.html">等待時間軸</a></span>
-  <span class="sp"><label class="sub">只看 <select id="grp" aria-label="區別"></select></label></span>
+  <nav class="nav" aria-label="主選單"><a href="live.html" aria-current="page">即時看板</a><a href="history.html">歷史統計</a><a href="./">車頭與司機</a></nav>
+  <div class="hrow"><span class="sub"><span id="asof"></span> · 內部資料，請勿外傳</span><span class="sp"><label class="sub">只看車隊 <select id="grp" aria-label="車隊"></select></label></span></div>
 </header>
 <div id="gate" class="card" hidden>
   <h2>請輸入通行碼</h2>
@@ -191,7 +198,7 @@ function draw() {
     tile('在站內等下一班', fmt(c(t => t.st === 'stay')), '台', `今晚到現在共等了 ${fmt(Math.round(waitMin / 60))} 小時`, `等太久 ${fmt(aWait.length)} 台`, 'secWait', '每次在站內等 1 小時以上、6 小時以內才算進「共等了幾小時」') +
     tile('還沒出車', fmt(c(t => t.st === 'idle0')), '台', `今晚跑完 ${fmt(c(t => t.st === 'done'))} 台`, `該出發還沒出發 ${fmt(aOut.length)} 台`, 'secOut') +
     tile('已跑里程', wan(kmDone), '萬公里', `今晚預計 ${wan(kmPlan)} 萬 · 空車空櫃 ${kmShort(kmE)}` + (kmDone >= 5000 ? `（${Math.round(kmE / kmDone * 100)}%）` : ''), '', '', '空車空櫃：班次名稱有「空」字，或沒有班次名稱的移動。剛開始跑的時候公里數少，占比先不顯示') +
-    tile('還沒派車的加班', fmt(D.pend.length), '班', g ? '（全部區別合計）' : '櫃已封好、等車頭', '幫加班找車', 'secFind');
+    tile('還沒派車的加班', fmt(D.pend.length), '班', g ? '（全部車隊合計）' : '櫃已封好、等車頭', '幫加班找車', 'secFind');
 
   // ---- 現在閒著的車 ----
   const minFree = +$('#iMin').value;
@@ -211,7 +218,7 @@ function draw() {
   else {
     const leg = to ? km(from, to) : null, maxKm = +$('#fMax').value;
     const C = [];
-    for (const t of D.tractors) {             // 找車不受區別篩選限制：別區的車也可能最近
+    for (const t of D.tractors) {             // 找車不受車隊篩選限制：別的車隊的車也可能最近
       let ready, atName, k;
       if (t.st === 'stay' || t.st === 'done') { k = km(t.at, from); if (k == null) continue; ready = now + Math.round(k / SPEED * 60); atName = t.atName; }
       else if (t.st === 'road' && t.at === from && t.eta != null && t.eta - now <= 40) { k = 0; ready = Math.max(now, t.eta); atName = `快到${t.atName}（${hm(t.eta)}）`; }

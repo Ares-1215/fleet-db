@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>車頭資源庫</title>
+<title>車頭與司機</title>
 <style>
 :root{
   color-scheme: light;
@@ -33,7 +33,13 @@
 html,body{margin:0}
 body{background:var(--page);color:var(--ink);font:14px/1.55 system-ui,-apple-system,"Segoe UI","Microsoft JhengHei",sans-serif}
 .wrap{max-width:1240px;margin:0 auto;padding:20px 16px 64px}
-header h1{font-size:22px;margin:0 0 2px;font-weight:650}
+/* 三個網頁共用的主選單 */
+.hd{display:flex;gap:8px 18px;flex-wrap:wrap;align-items:center;margin-bottom:4px}
+.nav{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+.nav a,header .nav a{padding:5px 13px;border-radius:999px;color:var(--ink2);text-decoration:none;font-size:14px;border:1px solid var(--axis)}
+.nav a:hover,header .nav a:hover{color:var(--ink);text-decoration:none}
+.nav a[aria-current="page"],header .nav a[aria-current="page"]{background:var(--ink);color:var(--page);border-color:var(--ink);font-weight:600}
+header h1{font-size:22px;margin:0;font-weight:650}
 header .sub{color:var(--ink2);font-size:13px}
 header a{color:var(--s1);text-decoration:none}
 header a:hover{text-decoration:underline}
@@ -112,7 +118,7 @@ ul.plain li{margin:3px 0}
 <body>
 <div class="wrap">
 <header>
-  <h1>車頭資源庫</h1>
+  <div class="hd"><h1>車頭與司機</h1><nav class="nav" aria-label="主選單"><a href="live.html">即時看板</a><a href="history.html">歷史統計</a><a href="./" aria-current="page">車頭與司機</a></nav></div>
   <div class="sub" id="hdr"></div>
 </header>
 <div id="gate" class="card" hidden>
@@ -123,10 +129,10 @@ ul.plain li{margin:3px 0}
 </div>
 <nav class="tabs" role="tablist">
   <button role="tab" data-t="ov" aria-selected="true">總覽</button>
-  <button role="tab" data-t="pool" aria-selected="false">水庫規模</button>
+  <button role="tab" data-t="pool" aria-selected="false">總量</button>
   <button role="tab" data-t="slot" aria-selected="false">班表車頭</button>
   <button role="tab" data-t="drv" aria-selected="false">司機</button>
-  <button role="tab" data-t="def" aria-selected="false">口徑說明</button>
+  <button role="tab" data-t="def" aria-selected="false">數字怎麼算</button>
 </nav>
 
 <section id="ov">
@@ -135,7 +141,7 @@ ul.plain li{margin:3px 0}
   <div class="grid g4" id="tiles"></div>
 
   <h2>逐月趨勢</h2>
-  <p class="note">每月只取常態平日（週一到週五，扣掉春節、連假等出車數明顯偏低的日子）求每晚平均，月與月才能比。</p>
+  <p class="note">每月只取一般平日（週一到週五，扣掉春節、連假等出車數明顯偏低的日子）求每晚平均，月與月才能比。</p>
   <div class="grid g3" id="mCharts"></div>
   <details class="tv"><summary>看逐月數字</summary><div class="tblwrap" style="margin-top:8px"><table id="mTable"></table></div></details>
 
@@ -144,12 +150,12 @@ ul.plain li{margin:3px 0}
   <div class="grid g2" id="dCharts"></div>
   <details class="tv"><summary>看星期數字</summary><div class="tblwrap" style="margin-top:8px"><table id="dTable"></table></div></details>
 
-  <h2>各組別（近一季平日每晚）</h2>
+  <h2>各車隊（近一季平日每晚）</h2>
   <div class="tblwrap"><table id="gTable"></table></div>
 </section>
 
 <section id="pool" hidden>
-  <h2>水庫有多大</h2>
+  <h2>車頭與司機一共有多少</h2>
   <p class="note" id="poolNote"></p>
   <div class="grid g4" id="poolTiles"></div>
 
@@ -174,7 +180,7 @@ ul.plain li{margin:3px 0}
   <p class="note">「車頭代號」是運行表上的班表位置（例如「新竹３」），實際開的車與司機會輪替。點任一列看逐月出車天數與里程。</p>
   <div class="filters">
     <input id="sQ" type="search" placeholder="搜尋代號、名稱、起站、司機" aria-label="搜尋班表車頭">
-    <select id="sG" aria-label="組別"></select>
+    <select id="sG" aria-label="車隊"></select>
     <select id="sK" aria-label="類型"><option value="">全部類型</option><option value="fixed">固定班表</option><option value="extra">增開（含春節、中秋檔期）</option><option value="flex">機動（待機／加班／補櫃）</option></select>
     <select id="sR" aria-label="近一季出勤率"><option value="">全部出勤率</option><option value="90">90% 以上</option><option value="70">70–89%</option><option value="30">30–69%</option><option value="1">1–29%</option><option value="0">近一季未出車</option></select>
     <button class="btn" id="sCsv">下載 CSV</button>
@@ -189,7 +195,7 @@ ul.plain li{margin:3px 0}
   <p class="note">以姓名認人（同一位司機換過帳號的會合併）；同一天開兩個班表位置的，里程合併計算。點任一列看逐月出車天數與里程。</p>
   <div class="filters">
     <input id="dQ" type="search" placeholder="搜尋姓名、帳號、車行、起站" aria-label="搜尋司機">
-    <select id="dG" aria-label="組別"></select>
+    <select id="dG" aria-label="車隊"></select>
     <select id="dT" aria-label="身分"><option value="">全部身分</option><option value="自有">自有</option><option value="外車">外車</option><option value="代管帳號">未具名帳號</option></select>
     <select id="dR" aria-label="近一季出勤率"><option value="">全部出勤率</option><option value="90">90% 以上</option><option value="70">70–89%</option><option value="30">30–69%</option><option value="1">1–29%</option><option value="0">近一季未出車</option></select>
     <button class="btn" id="dCsv">下載 CSV</button>
@@ -199,7 +205,7 @@ ul.plain li{margin:3px 0}
 </section>
 
 <section id="def" hidden>
-  <h2>口徑說明</h2>
+  <h2>數字怎麼算</h2>
   <div class="card" id="defBody"></div>
 </section>
 </div>
@@ -299,47 +305,47 @@ const meter = p => p == null ? '<span class="sub2">—</span>' : `<span class="m
 function dwCells(a) { const mx = Math.max(...a, 1); return '<span class="dw" title="' + a.map((v, i) => '週' + WD[i] + ' ' + v + ' 天').join('、') + '">' + a.map(v => { const l = v === 0 ? 0 : Math.max(1, Math.ceil(v / mx * 5)); return `<i class="${l ? 'l' + l : ''}"></i>`; }).join('') + '</span>'; }
 
 /* ---------- header ---------- */
-$('#hdr').innerHTML = `資料：報表平台「行駛日報明細」 ${T.from} ～ ${T.to}（${fmt(T.days)} 天、${fmt(T.rows)} 筆） · 產生時間 ${T.built} · 內部資料，含司機姓名，請勿外傳 · <a href="wait.html">等待時間軸</a> · <a href="live.html">即時看板</a>`;
+$('#hdr').innerHTML = `資料：報表平台「行駛日報明細」 ${T.from} ～ ${T.to}（${fmt(T.days)} 天、${fmt(T.rows)} 筆） · 產生時間 ${T.built} · 內部資料，含司機姓名，請勿外傳`;
 
 /* ---------- 總覽 ---------- */
 const TR = D.trend, chg = (a, b) => (b >= a ? '多 ' : '少 ') + Math.abs(Math.round((b - a) / a * 1000) / 10) + '%';
-$('#ovNote').textContent = `近一季＝${P.from} ～ ${P.to} 的 ${P.nights} 個常態平日。一年內共 ${fmt(T.slots)} 個班表車頭出過車（固定 ${fmt(T.fixed)}、增開 ${fmt(T.extra)}、機動 ${fmt(T.flex)}），具名司機 ${fmt(T.drivers)} 位（自有 ${fmt(T.own)}、外車 ${fmt(T.out)}）。` + (TR ? `${TR.b.ym.replace('-', ' 年 ')} 月和 ${TR.a.ym.replace('-', ' 年 ')} 月相比，每晚出車${chg(TR.a.ran, TR.b.ran)}、每晚里程${chg(TR.a.km, TR.b.km)}。` : '');
+$('#ovNote').textContent = `近一季＝${P.from} ～ ${P.to} 的 ${P.nights} 個一般平日。一年內共 ${fmt(T.slots)} 個班表車頭出過車（固定 ${fmt(T.fixed)}、增開 ${fmt(T.extra)}、機動 ${fmt(T.flex)}），具名司機 ${fmt(T.drivers)} 位（自有 ${fmt(T.own)}、外車 ${fmt(T.out)}）。` + (TR ? `${TR.b.ym.replace('-', ' 年 ')} 月和 ${TR.a.ym.replace('-', ' 年 ')} 月相比，每晚出車${chg(TR.a.ran, TR.b.ran)}、每晚里程${chg(TR.a.km, TR.b.km)}。` : '');
 $('#tiles').innerHTML =
   tile('每晚出車', fmt(P.ranAvg), '台', `固定 ${fmt(P.fixedAvg)} ＋ 增開 ${fmt(P.extraAvg)} ＋ 機動 ${fmt(P.flexAvg)}`) +
   tile('每晚具名司機', fmt(P.driversAvg), '人', `另有未具名帳號 ${fmt(P.anonAvg)} 筆`) +
   tile('每晚總里程', fmt(Math.round(P.kmAvg / 1000) / 10), '萬 km', `一年累計 ${fmt(Math.round(T.kmTotal / 1e4))} 萬 km`) +
   tile('每台一晚', fmt(P.kmPer), 'km', `中位數 ${fmt(P.kmMed)} km`);
 
-const M = D.months, mLab = M.map(m => ymLabel(m.ym) + (m.partial ? '*' : '')), mTip = M.map(m => m.ym.replace('-', ' 年 ') + ' 月' + (m.partial ? `（只到 ${md(m.last)}）` : '') + `，常態平日 ${m.wkDays} 天`);
+const M = D.months, mLab = M.map(m => ymLabel(m.ym) + (m.partial ? '*' : '')), mTip = M.map(m => m.ym.replace('-', ' 年 ') + ' 月' + (m.partial ? `（只到 ${md(m.last)}）` : '') + `，一般平日 ${m.wkDays} 天`);
 const mc = $('#mCharts');
 const lastPartial = M[M.length - 1].partial ? `＊最後一個月只到 ${md(M[M.length - 1].last)}` : '';
 lineChart(chartCard(mc, '每晚出車台數', lastPartial), { labels: mLab, values: M.map(m => m.ran), unit: '台', tipLabel: mTip });
 lineChart(chartCard(mc, '每晚總里程（萬 km）', lastPartial), { labels: mLab, values: M.map(m => Math.round(m.km / 1000) / 10), unit: '萬 km', tipLabel: mTip });
 lineChart(chartCard(mc, '每台一晚里程（km）', lastPartial), { labels: mLab, values: M.map(m => m.kmPer), unit: 'km', tipLabel: mTip });
-table($('#mTable'), [{ t: '月份' }, { t: '常態平日', n: 1 }, { t: '非常態平日', n: 1 }, { t: '每晚出車', n: 1 }, { t: '固定', n: 1 }, { t: '增開', n: 1 }, { t: '機動', n: 1 }, { t: '排班未出車', n: 1 }, { t: '具名司機', n: 1 }, { t: '未具名', n: 1 }, { t: '每晚里程 km', n: 1 }, { t: '每台 km', n: 1 }, { t: '非重櫃里程 %', n: 1 }, { t: '整月里程 萬km', n: 1 }],
+table($('#mTable'), [{ t: '月份' }, { t: '一般平日', n: 1 }, { t: '其他平日', n: 1 }, { t: '每晚出車', n: 1 }, { t: '固定', n: 1 }, { t: '增開', n: 1 }, { t: '機動', n: 1 }, { t: '排班未出車', n: 1 }, { t: '具名司機', n: 1 }, { t: '未具名', n: 1 }, { t: '每晚里程 km', n: 1 }, { t: '每台 km', n: 1 }, { t: '空車空櫃里程 %', n: 1 }, { t: '整月里程 萬km', n: 1 }],
   M.map(m => [m.ym + (m.partial ? '（至 ' + md(m.last) + '）' : ''), m.wkDays, m.offDays, fmt(m.ran), fmt(m.ranFixed), fmt(m.ranExtra), fmt(m.ranFlex), fmt(m.idleFixed), fmt(m.drivers), fmt(m.anon), fmt(m.km), fmt(m.kmPer), m.emptyPct, fmt(Math.round(m.kmTotal / 1e3) / 10)]));
 
 const W5 = D.dows, hr = P.headroom;
 const wMon = W5[0].recent, wFri = W5[4].recent;
 $('#dowNote').textContent = `近一季：週一每晚 ${fmt(Math.round(wMon.ran))} 台，一路降到週五 ${fmt(Math.round(wFri.ran))} 台，差 ${fmt(Math.round(wMon.ran - wFri.ran))} 台；其中增開班就差 ${fmt(Math.round(wMon.extra - wFri.extra))} 台（週一 ${fmt(Math.round(wMon.extra))}、週五 ${fmt(Math.round(wFri.extra))}），固定班表只差 ${fmt(Math.round(wMon.fixed - wFri.fixed))} 台。`;
 const dc = $('#dCharts');
-colChart(chartCard(dc, '每晚出車台數（近一季）', '常態日平均'), { labels: W5.map(x => '週' + x.label), values: W5.map(x => Math.round(x.recent.ran)), unit: '台', tips: W5.map(x => `週${x.label}（${x.recent.n} 天）<br><b>${fmt(x.recent.ran)}</b> 台 · 司機 ${fmt(x.recent.drivers)} 人`) });
-colChart(chartCard(dc, '每台一晚里程（近一季，km）', '常態日平均'), { labels: W5.map(x => '週' + x.label), values: W5.map(x => x.recent.kmPer), unit: 'km', tips: W5.map(x => `週${x.label}<br><b>${fmt(x.recent.kmPer)}</b> km/台 · 當晚共 ${fmt(x.recent.km)} km`) });
+colChart(chartCard(dc, '每晚出車台數（近一季）', '一般平日平均'), { labels: W5.map(x => '週' + x.label), values: W5.map(x => Math.round(x.recent.ran)), unit: '台', tips: W5.map(x => `週${x.label}（${x.recent.n} 天）<br><b>${fmt(x.recent.ran)}</b> 台 · 司機 ${fmt(x.recent.drivers)} 人`) });
+colChart(chartCard(dc, '每台一晚里程（近一季，km）', '一般平日平均'), { labels: W5.map(x => '週' + x.label), values: W5.map(x => x.recent.kmPer), unit: 'km', tips: W5.map(x => `週${x.label}<br><b>${fmt(x.recent.kmPer)}</b> km/台 · 當晚共 ${fmt(x.recent.km)} km`) });
 table($('#dTable'), [{ t: '星期' }, { t: '近一季天數', n: 1 }, { t: '每晚出車', n: 1 }, { t: '固定', n: 1 }, { t: '增開', n: 1 }, { t: '機動', n: 1 }, { t: '具名司機', n: 1 }, { t: '每晚里程 km', n: 1 }, { t: '每台 km', n: 1 }, { t: '全年天數', n: 1 }, { t: '全年每晚出車', n: 1 }, { t: '全年每台 km', n: 1 }],
   W5.map(x => ['週' + x.label, x.recent.n, fmt(x.recent.ran), fmt(x.recent.fixed), fmt(x.recent.extra), fmt(x.recent.flex), fmt(x.recent.drivers), fmt(x.recent.km), fmt(x.recent.kmPer), x.year.n, fmt(x.year.ran), fmt(x.year.kmPer)]));
 
 const gMax = Math.max(...D.groups.map(g => g.ran));
-table($('#gTable'), [{ t: '組別' }, { t: '每晚出車（台）' }, { t: '固定', n: 1 }, { t: '增開', n: 1 }, { t: '機動', n: 1 }, { t: '排班未出車', n: 1 }, { t: '出過車的班表車頭', n: 1 }, { t: '具名司機', n: 1 }, { t: '外車占比', n: 1 }, { t: '每台 km', n: 1 }, { t: '中位數 km', n: 1 }, { t: '非重櫃里程', n: 1 }],
+table($('#gTable'), [{ t: '車隊' }, { t: '每晚出車（台）' }, { t: '固定', n: 1 }, { t: '增開', n: 1 }, { t: '機動', n: 1 }, { t: '排班未出車', n: 1 }, { t: '出過車的班表車頭', n: 1 }, { t: '具名司機', n: 1 }, { t: '外車占比', n: 1 }, { t: '每台 km', n: 1 }, { t: '中位數 km', n: 1 }, { t: '空車空櫃里程', n: 1 }],
   D.groups.map(g => [esc(g.grp), `<span class="bar" style="width:${Math.round(g.ran / gMax * 120)}px"></span>${fmt(g.ran)}`, fmt(g.fixed), fmt(g.extra), fmt(g.flex), fmt(g.idleFixed), fmt(g.slots), fmt(g.drivers), g.outPct + '%', fmt(g.kmPer), fmt(g.kmMed), g.emptyPct + '%']));
 
 /* ---------- 水庫 ---------- */
-$('#poolNote').textContent = `以近一季 ${P.nights} 個常態平日來看（${P.from} ～ ${P.to}）。`;
+$('#poolNote').textContent = `以近一季 ${P.nights} 個一般平日來看（${P.from} ～ ${P.to}）。`;
 $('#poolTiles').innerHTML =
   tile('出過車的班表車頭', fmt(P.slotsActive), '個', `固定 ${fmt(P.fixedActive)} ＋ 增開 ${fmt(P.extraActive)} ＋ 機動 ${fmt(P.flexActive)}`) +
   tile('出過車的具名司機', fmt(P.driversActive), '人', `自有 ${fmt(P.ownActive)}、外車 ${fmt(P.outActive)}`) +
   tile('每晚出車', fmt(P.ranAvg), '台', `最少 ${fmt(P.ranMin)}、最多 ${fmt(P.ranMax)}（${md(P.ranMaxDate)}）`) +
   tile('排了班但沒出車', fmt(P.idleFixedAvg), '台／晚', '固定班表車頭，當晚里程為 0');
-$('#tierNote').textContent = `近一季有排班的固定班表車頭 ${fmt(P.fixedSlots)} 個，依常態平日出勤率分層（出勤率＝有排班的平日裡，實際有里程的比例）。另有 ${fmt(P.placeholders)} 個代號一年來從沒出過車（多為站所自有車頭掛名），不列入。`;
+$('#tierNote').textContent = `近一季有排班的固定班表車頭 ${fmt(P.fixedSlots)} 個，依一般平日出勤率分層（出勤率＝有排班的平日裡，實際有里程的比例）。另有 ${fmt(P.placeholders)} 個代號一年來從沒出過車（多為站所自有車頭掛名），不列入。`;
 const tMax = Math.max(...P.tiers.map(t => t.n));
 table($('#tierTable'), [{ t: '分層' }, { t: '近一季平日出勤率' }, { t: '班表車頭數' }, { t: '每晚貢獻台數', n: 1 }],
   P.tiers.map(t => [esc(t.label), t.hi <= 1 ? '0%' : t.hi > 100 ? `${t.lo}% 以上` : `${t.lo}–${t.hi - 1}%`, `<span class="bar" style="width:${Math.round(t.n / tMax * 160)}px"></span>${fmt(t.n)}`, fmt(t.perNight)]));
@@ -347,7 +353,7 @@ const dtMax = Math.max(...P.drvTiers.map(t => t.n));
 table($('#drvTierTable'), [{ t: '分層' }, { t: '近一季平日出勤率' }, { t: '司機人數' }, { t: '自有', n: 1 }, { t: '外車', n: 1 }, { t: '每晚貢獻人數', n: 1 }],
   P.drvTiers.map(t => [esc(t.label), t.hi > 100 ? `${t.lo}% 以上` : t.lo === 0 ? `${t.hi}% 以下` : `${t.lo}–${t.hi - 1}%`, `<span class="bar" style="width:${Math.round(t.n / dtMax * 160)}px"></span>${fmt(t.n)}`, fmt(t.own), fmt(t.out), fmt(t.perNight)]));
 $('#kmNote').textContent = `近一季平日，出車的車一晚平均跑 ${fmt(P.kmPer)} km、中位數 ${fmt(P.kmMed)} km、前四分之一在 ${fmt(P.kmP75)} km 以上。`;
-const kc = $('#kmChart'); kc.innerHTML = '<h3>里程分布（每晚台數）</h3><p class="cap">近一季常態平日平均，依當晚實際里程分組</p>';
+const kc = $('#kmChart'); kc.innerHTML = '<h3>里程分布（每晚台數）</h3><p class="cap">近一季一般平日平均，依當晚實際里程分組</p>';
 colChart(kc, { labels: P.kmBands.map(b => b.label), values: P.kmBands.map(b => Math.round(b.perNight)), unit: '台', tips: P.kmBands.map(b => `${b.label} km<br><b>${fmt(b.perNight)}</b> 台／晚（${b.pct}%）`) });
 $('#headroom').innerHTML = `<h3 style="font-size:14px;margin:0 0 6px">餘裕的四種看法</h3>
 <p class="note" style="margin-bottom:6px">都只是從紀錄推出來的上限，實際能不能調還要看路線、工時與站所作業。</p>
@@ -389,7 +395,7 @@ function csv(name, cols, rows) {
   const body = [cols.map(c => q(c.t)).join(',')].concat(rows.map(r => cols.map(c => q(c.v(r))).join(','))).join('\r\n');
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + body], { type: 'text/csv' })); a.download = name; a.click(); URL.revokeObjectURL(a.href);
 }
-const grpOpts = sel => { sel.innerHTML = '<option value="">全部組別</option>' + D.groups.map(g => `<option>${esc(g.grp)}</option>`).join(''); };
+const grpOpts = sel => { sel.innerHTML = '<option value="">全部車隊</option>' + D.groups.map(g => `<option>${esc(g.grp)}</option>`).join(''); };
 
 /* ---------- 班表車頭 ---------- */
 const KIND = { fixed: '固定', extra: '增開', flex: '機動' };
@@ -397,13 +403,13 @@ grpOpts($('#sG'));
 const sCols = [
   { t: '代號 名稱', k: 'id', f: r => `<b>${esc(r.id)}</b> ${esc(r.name)}`, v: r => r.id + ' ' + r.name },
   { t: '類型', k: 'kind', f: r => KIND[r.kind], v: r => KIND[r.kind] },
-  { t: '組別', k: 'grp', f: r => esc(r.grp), v: r => r.grp },
+  { t: '車隊', k: 'grp', f: r => esc(r.grp), v: r => r.grp },
   { t: '常駐起站', k: 'st', f: r => esc(r.st), v: r => r.st },
   { t: '近一季出勤率', k: 'rcRate', f: r => meter(r.rcRate) + ` <span class="sub2">${r.rcRan}/${r.rcSched}</span>`, v: r => r.rcRate ?? '' },
   { t: '全年出車天數', k: 'ranDays', n: 1, def: 1, f: r => fmt(r.ranDays), v: r => r.ranDays },
   { t: '日均里程', k: 'kmAvg', n: 1, f: r => fmt(r.kmAvg), v: r => r.kmAvg },
   { t: '表定里程', k: 'kmPlanAvg', n: 1, f: r => fmt(r.kmPlanAvg), v: r => r.kmPlanAvg },
-  { t: '非重櫃', k: 'emptyPct', n: 1, f: r => r.emptyPct == null ? '—' : r.emptyPct + '%', v: r => r.emptyPct ?? '' },
+  { t: '空車空櫃', k: 'emptyPct', n: 1, f: r => r.emptyPct == null ? '—' : r.emptyPct + '%', v: r => r.emptyPct ?? '' },
   { t: '星期規律', f: r => dwCells(r.dow), v: r => r.dow.join('/') },
   { t: '主要司機', k: 'drv', f: r => r.drv ? `${esc(r.drv)} <span class="sub2">${r.drvShare}%</span>` : '—', v: r => r.drv },
   { t: '司機數', k: 'drvN', n: 1, f: r => r.drvN, v: r => r.drvN },
@@ -420,7 +426,7 @@ grpOpts($('#dG'));
 const dCols = [
   { t: '姓名 帳號', k: 'name', f: r => `<b>${esc(r.name)}</b> <span class="sub2">${esc(r.ids)}</span>`, v: r => r.name + ' ' + r.ids },
   { t: '身分', k: 'type', f: r => (r.type === '代管帳號' ? '未具名' : r.type) + (r.org ? ` <span class="sub2">${esc(r.org)}</span>` : ''), v: r => (r.type === '代管帳號' ? '未具名' : r.type) + (r.org ? ' ' + r.org : '') },
-  { t: '組別', k: 'grp', f: r => esc(r.grp), v: r => r.grp },
+  { t: '車隊', k: 'grp', f: r => esc(r.grp), v: r => r.grp },
   { t: '常駐起站', k: 'st', f: r => esc(r.st), v: r => r.st },
   { t: '近一季出勤率', k: 'rcRate', f: r => meter(r.rcRate) + (r.rcRate == null ? '' : ` <span class="sub2">${r.rcRan}/${r.rcSpan}</span>`), v: r => r.rcRate ?? '' },
   { t: '全年出車天數', k: 'ranDays', n: 1, def: 1, f: r => fmt(r.ranDays), v: r => r.ranDays },
@@ -443,13 +449,13 @@ $('#defBody').innerHTML = `<ul class="plain">
 <li><b>班表車頭</b>：報表的「車頭代號」是運行表上的班表位置，不是實體車。實體車看牌照，一年內出過車的牌照 ${fmt(T.plates)} 個（含外車與共用牌照）。</li>
 <li><b>固定／增開／機動</b>：名稱含「待機、加班、補櫃」的算機動；含「增開、春節、中秋、秋運」的算增開；其餘算固定班表。這些代號每天都會列出，有沒有用要看當晚里程。另有 ${fmt(T.placeholders)} 個代號一年來從沒出過車，不列入統計。</li>
 <li><b>出車</b>：當晚「實際里程」大於 0。出車的紀錄中 ${T.sameAsPlanPct}% 的實際里程與表定里程完全相同，${T.noCheckPct}% 沒有出車檢查時間，所以里程不全是實測值。另有 ${fmt(T.bigRows)} 筆一晚超過 ${fmt(T.soloMax)} km（多為日間補櫃車、指揮中心待機車這類一個代號含多台車），總里程照算，但不列入「每台里程」。</li>
-<li><b>常態平日</b>：週一到週五，且當天出車數不低於同星期中位數的 70%，共 ${fmt(T.wkDays)} 天。被排除的平日（假日前夕、連假、颱風或來源沒有里程）：${D.offDays.length ? D.offDays.map(d => d.date.slice(2).replace(/-/g, '/') + '（' + d.ran + ' 台）').join('、') : '無'}。</li>
-<li><b>近一季</b>：最後 13 週，${P.from} ～ ${P.to}，常態平日 ${P.nights} 天。</li>
-<li><b>出勤率</b>：班表車頭＝近一季常態平日中，有排班且有出車的比例。司機＝首次出車之後的近一季常態平日中，有出車的比例（看不到請假與排休，只看得到有沒有開車）。</li>
+<li><b>一般平日</b>：週一到週五，且當天出車數不低於同星期中位數的 70%，共 ${fmt(T.wkDays)} 天。被排除的平日（假日前夕、連假、颱風或來源沒有里程）：${D.offDays.length ? D.offDays.map(d => d.date.slice(2).replace(/-/g, '/') + '（' + d.ran + ' 台）').join('、') : '無'}。</li>
+<li><b>近一季</b>：最後 13 週，${P.from} ～ ${P.to}，一般平日 ${P.nights} 天。</li>
+<li><b>出勤率</b>：班表車頭＝近一季一般平日中，有排班且有出車的比例。司機＝首次出車之後的近一季一般平日中，有出車的比例（看不到請假與排休，只看得到有沒有開車）。</li>
 <li><b>司機怎麼認</b>：以姓名為準，${fmt(T.multiId)} 位換過帳號的已合併；同名同姓會被當成同一人。司機欄是「待機１、指揮中心、何課長」這類的算未具名帳號（${fmt(T.anonAccounts)} 個），不算進司機人數。外車的司機欄是登記在帳號上的名字，實際開車的人可能輪替：全年出車超過 300 天的有 ${fmt(T.over300)} 位，全是外車。</li>
 <li><b>身分</b>：帳號是 9 開頭六碼的算外車（中運自車除外），其餘算自有。</li>
 <li><b>雙駕駛</b>：司機欄有第二位司機的紀錄 ${fmt(T.coRows)} 筆，目前只算第一位。</li>
-<li><b>非重櫃里程</b>：（空櫃里程＋空車頭里程）÷（空櫃＋空車頭＋重櫃）。</li>
+<li><b>空車空櫃里程</b>：（空櫃里程＋空車頭里程）÷（空櫃＋空車頭＋重櫃）。</li>
 <li><b>還沒納入</b>：等待時間、進離站時間、加班車提報紀錄。這一版只回答「有多少車、多少人、多常出車、跑多遠」。</li>
 </ul>`;
 }
