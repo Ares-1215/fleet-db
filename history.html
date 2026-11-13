@@ -27,6 +27,7 @@
   --s1:#3987e5; --s2:#d95926; --s3:#199e70;
 }
 *{box-sizing:border-box}
+[hidden]{display:none !important}
 html,body{margin:0}
 html{scroll-behavior:smooth}
 @media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
@@ -146,7 +147,7 @@ details li{margin-bottom:5px}
     <p class="lead" id="wkLead"></p>
     <div class="scroll"><table id="wkTable"></table></div>
     <div class="cols2">
-      <div><h3 style="margin-top:0">這一週等最多的三個站</h3><div class="scroll"><table id="wkWait"></table></div></div>
+      <div><h3 style="margin-top:0">這一週超過表定等最多的三個站</h3><div class="scroll"><table id="wkWait"></table></div></div>
       <div><h3 style="margin-top:0">這一週加班最多的三條路線</h3><div class="scroll"><table id="wkOt"></table></div></div>
     </div>
   </section>
@@ -159,11 +160,11 @@ details li{margin-bottom:5px}
 
   <section class="card" id="secWait">
     <h2>等待</h2>
-    <p class="hint">車頭在同一站，從進站到下一趟離站，等了 1 到 6 小時的。</p>
+    <p class="hint">車頭跑完一趟、在同一站等下一趟，等了 1 到 6 小時的。出車前（做完出車檢查到第一班出發）不算。</p>
     <p class="lead" id="lWait"></p>
-    <div class="legend"><span><i style="background:var(--s1)"></i>等櫃：車到了，下一班的櫃還沒封好</span><span><i style="background:var(--s2)"></i>等表定時間：櫃好了，還沒到表定出發時間</span><span><i style="background:var(--s3)"></i>該走了還沒走：櫃好了、時間也到了</span></div>
+    <div class="legend"><span><i style="background:var(--s1)"></i>照班表等：還沒到表定出發時間</span><span><i style="background:var(--s2)"></i>過了表定、櫃還沒封好</span><span><i style="background:var(--s3)"></i>櫃好了還沒走</span></div>
     <div class="chart" id="cWait"></div>
-    <h3>哪一站等最多</h3>
+    <h3>哪一站超過表定的等待最多</h3>
     <div class="scroll"><table id="tWait"></table></div>
     <a class="more" href="wait.html">看每一站幾點在等、哪些車頭固定在等 ›</a>
   </section>
@@ -207,11 +208,11 @@ details li{margin-bottom:5px}
   <p class="about">從紀錄裡找「車在等」和「加班要車」剛好對得上的地方。這裡列的是候選名單：沒有考慮司機工時、車型櫃型和當晚貨量，要不要做由調度判斷。</p>
   <section class="card">
     <h2>一、加班可以就近派車嗎</h2>
-    <p class="hint">不是原地的車接的加班，從櫃封好到實際出發這段時間，同一站有沒有別的車頭正在等。</p>
+    <p class="hint">不是原地的車接的加班，從櫃封好到實際出發這段時間，同一站有沒有別的車頭可以派：跑完一趟正在等的，或已經報到、第一班還沒出發的。</p>
     <p class="lead" id="lOpp"></p>
-    <div class="legend"><span><i style="background:var(--s1)"></i>有車在等，而且空檔夠跑一趟來回</span><span><i style="background:var(--s2)"></i>有車在等，但空檔不夠來回</span></div>
+    <div class="legend"><span><i style="background:var(--s1)"></i>同站有車，而且空檔夠跑一趟來回</span><span><i style="background:var(--s2)"></i>同站有車，但空檔不夠來回</span></div>
     <div class="chart" id="cOpp"></div>
-    <h3>哪些站最常「車在等、加班卻另外調車」</h3>
+    <h3>哪些站最常「站上有車、加班卻另外調車」</h3>
     <div class="scroll"><table id="tOpp"></table></div>
   </section>
   <section class="card">
@@ -239,13 +240,14 @@ details li{margin-bottom:5px}
   <summary>數字怎麼算</summary>
   <ul>
     <li><b>一般平日</b>：週一到週五，而且當晚出車台數不低於同星期平常的七成（扣掉春節、連假、颱風這類特別少的日子）。平均值只算一般平日，圖上淺色的是週末與其他日子。</li>
-    <li><b>等待</b>：同一台車頭在同一站，從「進站」到「下一趟離站」的時間，1 小時以上、6 小時以內才算（超過 6 小時當作下班或分段出勤）。</li>
-    <li><b>等待拆成三段</b>：「等櫃」＝進站到下一班的櫃封好；「等表定時間」＝櫃封好到表定出發時間；「該走了還沒走」＝櫃封好、表定時間也到了之後，到實際離站。下一班是空車或空櫃（沒有封櫃時間）的，一進站就算櫃好了；沒有表定時間的臨時班次，櫃好了就算該走了。</li>
+    <li><b>等待</b>：同一台車頭跑完一趟、在同一站，從「進站」到「下一趟離站」的時間，1 小時以上、6 小時以內才算（超過 6 小時當作下班或分段出勤）。</li>
+    <li><b>出車前不算等待</b>：司機下午做完出車檢查（或把車開到起站）之後，到晚上第一個正式班次出發之前，系統上看起來像「停在站內」，其實是還沒出車，不列入等待。判斷方式：當晚第一段、沒有班次名稱、也沒有表定出發時間的，就是報到到位。</li>
+    <li><b>等待分三段</b>（以下一趟的表定出發時間為界）：「照班表等」＝進站到表定出發時間，是班表本來就排的空檔；「過了表定、櫃還沒封好」＝表定時間到了，但下一班的櫃還沒封好；「櫃好了還沒走」＝表定時間到了、櫃也封好了，到實際離站。後兩段合稱「超過表定的等待」。下一班是空車或空櫃（沒有封櫃時間）的，當作櫃早就好了；沒有表定時間的臨時班次（例如加班），一進站就算過了表定。</li>
     <li><b>空車空櫃里程</b>：行駛日報裡的「空櫃里程」加「空車頭里程」；占比是除以（空櫃＋空車頭＋重櫃）。路段排行是依班次名稱判斷（名稱有「空」字算拉空櫃、沒有名稱的移動算只有車頭），會比行駛日報的數字少一些，只用來看哪些路段多。</li>
     <li><b>晚出發、晚到</b>：30 分的標準跟公司「班次即時監控警示」的「晚放車」「延誤進站」一樣。只比有表定時間的班次；臨時加開、沒有表定時間的不列入。前一班晚到，下一班通常跟著晚出發，所以同一台車的幾班可能都算晚。</li>
-    <li><b>加班</b>：班次名稱有「加班」而且實際有離站的班次。「封櫃後多久出發」＝離站時間減封櫃時間，取中位數（一半的班次比這個久）。「原地的車」＝前一趟剛好停在加班的出發站；「空車調來」＝前一趟是空車或空櫃開到加班的出發站。</li>
+    <li><b>加班</b>：班次名稱有「加班」而且實際有離站的班次。「封櫃後多久出發」＝離站時間減封櫃時間，取中位數（一半的班次比這個久）。「原地的車」＝前一趟剛好停在加班的出發站；「中途空車調來」＝前一趟是空車或空櫃開到加班的出發站；報到後第一趟就跑加班的算「當晚第一趟」，不算調車。</li>
     <li><b>超過 1 小時沒派到車</b>：公司警示當晚發出「貨櫃已傳輸但尚未指派」的加班櫃數。</li>
-    <li><b>加班可以就近派車</b>：只看不是原地的車接的加班。「同站有車在等」＝櫃封好到加班實際出發之間，同一站有別的車頭正在等（等待 1 小時以上的那種）。「空檔夠來回」＝那台車從櫃封好（或它進站）起算，到它自己下一趟離站之前，夠跑一趟加班再空車回來：來回公里 ÷ 時速 55 公里，再加裝卸掛櫃 30 分；一台車一晚只算一次。</li>
+    <li><b>加班可以就近派車</b>：只看不是原地的車接的加班。「同站有車」＝櫃封好到加班實際出發之間，同一站有別的車頭可以派：跑完一趟正在等的（等 1 小時以上），或已經報到、第一班還沒出發的。班表排的空檔能不能派要看車，這裡一律先列為候選。「空檔夠來回」＝那台車從櫃封好（或它進站）起算，到它自己下一趟離站之前，夠跑一趟加班再空車回來：來回公里 ÷ 時速 55 公里，再加裝卸掛櫃 30 分；一台車一晚只算一次。</li>
     <li><b>可以排進班表的組合</b>：同一台車頭、同一站、同一條加班路線，期間內一半以上的一般平日都符合「空檔夠來回」。「平常幾點在等」是這些晚上進站、離站時間的中位數。</li>
     <li><b>公司警示</b>：警示的名稱與標準照公司系統的設定。「天天都叫」＝同一個班次（沒有班次的看車頭），期間內七成以上的一般平日都被同一種警示叫到。</li>
     <li><b>資料來源</b>：班次的表定與實際時間、警示，來自公司「班次即時監控警示」（跟即時看板同一個來源）；出車台數與里程來自報表平台的行駛日報明細。每天中午過後補進前一晚。</li>
@@ -309,11 +311,11 @@ function stats(list) {
   const nn = list.filter(x => x.normal), a = nn.length ? nn : list, n = a.length || 1, av = f => sum(a, f) / n;
   const kmAll = av(x => x.kmBox + x.kmBob + x.kmLoad);
   return { n: a.length, normalOnly: nn.length > 0,
-    ran: av(x => x.ran), wH: av(x => x.wMin) / 60, wCars: av(x => x.wCars), wN: av(x => x.wN), wBox: av(x => x.wBox) / 60, wPlan: av(x => x.wPlan) / 60, wLate: av(x => x.wLate) / 60,
+    ran: av(x => x.ran), wH: av(x => x.wMin) / 60, wCars: av(x => x.wCars), wN: av(x => x.wN), wSched: av(x => x.wSched) / 60, wBox: av(x => x.wBox) / 60, wLate: av(x => x.wLate) / 60, wOver: av(x => x.wBox + x.wLate) / 60,
     kmAll, kmBox: av(x => x.kmBox), kmBob: av(x => x.kmBob), eP: pct(av(x => x.kmBox + x.kmBob), kmAll),
     oB: av(x => x.outBase), oL: av(x => x.outLate), oP: pct(sum(a, x => x.outLate), sum(a, x => x.outBase)), oMin: sum(a, x => x.outLate) ? sum(a, x => x.outLateMin) / sum(a, x => x.outLate) : 0, iP: pct(sum(a, x => x.inLate), sum(a, x => x.inBase)),
     ot: av(x => x.ot), otKm: av(x => x.otKm), lag: medOf(a.map(x => x.otLag)), local: av(x => x.otLocal), moved: av(x => x.otMoved), movedKm: av(x => x.otMovedKm), flex: av(x => x.otFlex), na: av(x => x.noAssign),
-    non: av(x => x.otNon), near: av(x => x.otNear), fit: av(x => x.otFit), fitKm: av(x => x.otFitKm), warn: av(x => x.warn) };
+    non: av(x => x.otNon), near: av(x => x.otNear), fit: av(x => x.otFit), fitKm: av(x => x.otFitKm), fitPre: av(x => x.otFitPre || 0), first: av(x => x.otFirst), warn: av(x => x.warn) };
 }
 
 /* ================= 每週摘要 ================= */
@@ -331,22 +333,22 @@ function drawWeek() {
   const P = v => fmt(v, 1) + '%', H = v => fmt(v) + ' 小時', T = v => fmt(v) + ' 台', C = v => f1(v) + ' 班', M = v => v == null ? '—' : fmt(v) + ' 分';
   table($('#wkTable'), [{ t: '每晚平均' }, { t: '這一週', n: 1 }, { t: '前一週', n: 1 }, { t: '近四週', n: 1 }, { t: '跟前一週比', n: 1 }], [
     row('出車', s => s.ran, T),
-    { grp: '等待' }, row('車頭在站內等待', s => s.wH, H), row('等了 1 小時以上的車頭', s => s.wCars, T), row('其中「該走了還沒走」', s => s.wLate, H),
+    { grp: '等待（出車前不算）' }, row('超過表定時間的等待', s => s.wOver, H), row('其中櫃好了還沒走', s => s.wLate, H), row('照班表等', s => s.wSched, H), row('等了 1 小時以上的車頭', s => s.wCars, T),
     { grp: '空車空櫃' }, row('空車空櫃里程占比', s => s.eP, P, true),
     { grp: '準點' }, row('晚出發 30 分以上', s => s.oP, P, true), row('晚到 30 分以上', s => s.iP, P, true),
     { grp: '加班' }, row('加班', s => s.ot, C), row('櫃封好後多久出發（一半的班次超過）', s => s.lag, M), row('超過 1 小時沒派到車', s => s.na, v => f1(v) + ' 個櫃'),
-    { grp: '改善機會' }, row('同站有車在等、加班卻另外調車', s => s.near, C), row('其中空檔夠跑來回', s => s.fit, C),
+    { grp: '改善機會' }, row('站上有車、加班卻另外調車', s => s.near, C), row('其中空檔夠跑來回', s => s.fit, C),
     { grp: '公司警示' }, row('警示', s => s.warn, v => fmt(v) + ' 筆'),
   ]);
   // 一句話：變化最大的兩項
   if (B) {
-    const items = [['等待時數', A.wH, B.wH, 0], ['空車空櫃占比', A.eP, B.eP, 1], ['晚出發比例', A.oP, B.oP, 1], ['加班班數', A.ot, B.ot, 0]].map(([nm, a, b, p]) => ({ nm, d: p ? a - b : (b ? (a - b) / b * 100 : 0), p }));
+    const items = [['超過表定的等待', A.wOver, B.wOver, 0], ['空車空櫃占比', A.eP, B.eP, 1], ['晚出發比例', A.oP, B.oP, 1], ['加班班數', A.ot, B.ot, 0]].map(([nm, a, b, p]) => ({ nm, d: p ? a - b : (b ? (a - b) / b * 100 : 0), p }));
     const big = items.filter(x => Math.abs(x.d) >= (x.p ? 1 : 3)).sort((x, y) => Math.abs(y.d) / (y.p ? 1 : 3) - Math.abs(x.d) / (x.p ? 1 : 3));
     const same = items.filter(x => !big.includes(x));
     $('#wkLead').innerHTML = '跟前一週比：' + (big.length ? big.map(x => `<b>${x.nm}${x.d > 0 ? '多' : '少'} ${fmt(Math.abs(x.d), x.p ? 1 : 0)}${x.p ? ' 個百分點' : '%'}</b>`).join('、') : '四個主題都差不多') + (big.length && same.length ? `；${same.map(x => x.nm).join('、')}差不多。` : '。') + (partial ? '（這一週還沒過完，先參考。）' : '');
   } else $('#wkLead').textContent = '這是資料裡最早的一週，沒有前一週可以比。';
   const R = D.weekRank[wk] || { waitSt: [], otRt: [] };
-  table($('#wkWait'), [{ t: '站所' }, { t: '每晚等待（小時）', n: 1 }, { t: '每晚幾次', n: 1 }], R.waitSt.map(r => [esc(r[0] + r[1]), fmt(r[2], 1), fmt(r[3], 1)]));
+  table($('#wkWait'), [{ t: '站所' }, { t: '每晚超過表定（小時）', n: 1 }, { t: '每晚幾次', n: 1 }], R.waitSt.map(r => [esc(r[0] + r[1]), fmt(r[2], 1), fmt(r[4], 1)]));
   table($('#wkOt'), [{ t: '路線' }, { t: '每晚幾班', n: 1 }, { t: '櫃封好後多久出發（分）', n: 1 }], R.otRt.map(r => [`${esc(r[0])} → ${esc(r[1])}`, fmt(r[2], 1), r[4] == null ? '—' : fmt(r[4])]));
 }
 
@@ -363,15 +365,15 @@ function drawTopics() {
   const { rows, S, R } = period();
   const tile = (lab, val, unit, ctx, to) => `<a class="card tile" href="#${to}"><div class="lab">${esc(lab)}</div><div class="val">${val}<small>${esc(unit)}</small></div><div class="ctx">${ctx}</div><div class="go">看明細 ›</div></a>`;
   $('#tiles').innerHTML =
-    tile('等待', fmt(S.wH), '小時／晚', `每晚 ${fmt(S.wCars)} 台車頭等了 1 小時以上`, 'secWait') +
+    tile('超過表定的等待', fmt(S.wOver), '小時／晚', `另有 ${fmt(S.wSched)} 小時是照班表在等`, 'secWait') +
     tile('空車空櫃里程', fmt(S.eP, 1), '%', `每晚 ${wan(S.kmBox + S.kmBob)} 萬公里沒有載貨`, 'secEmpty') +
     tile('晚出發', fmt(S.oP), '%', `每晚 ${fmt(S.oL)} 班晚 30 分以上；晚到 ${fmt(S.iP)}%`, 'secLate') +
     tile('加班', fmt(S.ot), '班／晚', S.lag == null ? '' : `櫃封好後，一半要等 ${fmt(S.lag)} 分以上才出發`, 'secOt');
 
   // ---- 等待 ----
-  $('#lWait').innerHTML = `一般平日每晚有 <b>${fmt(S.wCars)} 台</b>車頭在站內等了 1 小時以上，共 ${fmt(S.wN)} 次、合計 <b>${fmt(S.wH)} 小時</b>。其中 <b>${fmt(pct(S.wBox, S.wH))}%</b> 是車到了、下一班的櫃還沒封好；${fmt(pct(S.wPlan, S.wH))}% 是櫃好了在等表定時間；<b>${fmt(pct(S.wLate, S.wH))}%</b>（${fmt(S.wLate)} 小時）是櫃好了、時間也到了還沒走。`;
-  bars($('#cWait'), rows, [{ color: 'var(--s1)', get: x => x.wBox / 60 }, { color: 'var(--s2)', get: x => x.wPlan / 60 }, { color: 'var(--s3)', get: x => x.wLate / 60 }], { label: '每晚等待小時', avg: S.wH, avgText: fmt(S.wH) + ' 小時', tip: x => `等待 ${fmt(x.wMin / 60)} 小時（${fmt(x.wN)} 次、${fmt(x.wCars)} 台）<br>等櫃 ${fmt(x.wBox / 60)} 小時<br>等表定時間 ${fmt(x.wPlan / 60)} 小時<br>該走了還沒走 ${fmt(x.wLate / 60)} 小時` });
-  table($('#tWait'), [{ t: '站所' }, { t: '每晚等待（小時）', n: 1 }, { t: '每晚幾次', n: 1 }, { t: '平均一次（分）', n: 1 }, { t: '等櫃占', n: 1 }, { t: '該走了還沒走占', n: 1 }], R.waitSt.map(r => [esc(r[0] + r[1]), fmt(r[2], 1), fmt(r[3], 1), fmt(r[4]), fmt(r[5]) + '%', fmt(r[6]) + '%']));
+  $('#lWait').innerHTML = `一般平日每晚有 ${fmt(S.wCars)} 台車頭在站內等了 1 小時以上，共 ${fmt(S.wN)} 次、合計 ${fmt(S.wH)} 小時。其中 ${fmt(S.wSched)} 小時（${fmt(pct(S.wSched, S.wH))}%）還沒到表定出發時間，是班表本來就排的；<b>超過表定時間的有 ${fmt(S.wOver)} 小時</b>：${fmt(S.wBox)} 小時是櫃還沒封好，<b>${fmt(S.wLate)} 小時是櫃好了還沒走</b>。`;
+  bars($('#cWait'), rows, [{ color: 'var(--s1)', get: x => x.wSched / 60 }, { color: 'var(--s2)', get: x => x.wBox / 60 }, { color: 'var(--s3)', get: x => x.wLate / 60 }], { label: '每晚等待小時', avg: S.wH, avgText: fmt(S.wH) + ' 小時', tip: x => `在站等待 ${fmt(x.wMin / 60)} 小時（${fmt(x.wN)} 次、${fmt(x.wCars)} 台）<br>照班表等 ${fmt(x.wSched / 60)} 小時<br>過了表定、櫃還沒封好 ${fmt(x.wBox / 60)} 小時<br>櫃好了還沒走 ${fmt(x.wLate / 60)} 小時` });
+  table($('#tWait'), [{ t: '站所' }, { t: '每晚超過表定（小時）', n: 1 }, { t: '每晚照班表等（小時）', n: 1 }, { t: '每晚幾次', n: 1 }, { t: '平均一次在站（分）', n: 1 }], R.waitSt.map(r => [esc(r[0] + r[1]), `<b>${fmt(r[2], 1)}</b>`, fmt(r[3], 1), fmt(r[4], 1), fmt(r[5])]));
 
   // ---- 空車空櫃里程 ----
   $('#lEmpty').innerHTML = `一般平日每晚跑 ${wan(S.kmAll)} 萬公里，其中 <b>${wan(S.kmBox + S.kmBob)} 萬公里（${fmt(S.eP, 1)}%）</b>沒有載貨：拉空櫃 ${wan(S.kmBox)} 萬、只有車頭 ${wan(S.kmBob)} 萬。`;
@@ -385,21 +387,21 @@ function drawTopics() {
   else table($('#tLate'), [{ t: '班次' }, { t: '起迄' }, { t: '有跑的晚數', n: 1 }, { t: '晚出發的晚數', n: 1 }, { t: '比例', n: 1 }, { t: '平均晚（分）', n: 1 }], R.lateTrip.map(r => [`${esc(r[0])} ${esc(r[1])}`, `${esc(r[2])} → ${esc(r[3])}`, fmt(r[4]), fmt(r[5]), fmt(r[6]) + '%', fmt(r[7])]), '這段期間還不夠長，排不出班次。');
 
   // ---- 加班 ----
-  $('#lOt').innerHTML = `一般平日每晚 <b>${fmt(S.ot)} 班</b>加班、共 ${wan(S.otKm)} 萬公里。` + (S.lag == null ? '' : `櫃封好之後，一半的加班要等 <b>${fmt(S.lag)} 分</b>以上才出發；`) + `每晚有 ${fmt(S.na)} 個加班櫃超過 1 小時沒派到車。跑加班的車有 <b>${fmt(pct(S.moved, S.ot))}%</b> 是空車調來的（每晚為此多跑 ${fmt(S.movedKm)} 公里），${fmt(pct(S.local, S.ot))}% 是原本就停在那一站的車。`;
+  $('#lOt').innerHTML = `一般平日每晚 <b>${fmt(S.ot)} 班</b>加班、共 ${wan(S.otKm)} 萬公里。` + (S.lag == null ? '' : `櫃封好之後，一半的加班要等 <b>${fmt(S.lag)} 分</b>以上才出發；`) + `每晚有 ${fmt(S.na)} 個加班櫃超過 1 小時沒派到車。跑加班的車有 <b>${fmt(pct(S.moved, S.ot))}%</b> 是中途空車調來的（每晚為此多跑 ${fmt(S.movedKm)} 公里），${fmt(pct(S.local, S.ot))}% 是原本就停在那一站的車，${fmt(pct(S.first, S.ot))}% 是當晚第一趟就跑加班。`;
   bars($('#cOt'), rows, [{ color: 'var(--s1)', get: x => x.ot }], { label: '每晚加班班數', avg: S.ot, avgText: fmt(S.ot) + ' 班', tip: x => `加班 ${fmt(x.ot)} 班、${fmt(x.otKm)} 公里<br>櫃封好後 ${x.otLag == null ? '—' : fmt(x.otLag) + ' 分'}出發（中位數）<br>空車調來 ${fmt(x.otMoved)} 班、原地的車 ${fmt(x.otLocal)} 班<br>超過 1 小時沒派到車 ${fmt(x.noAssign)} 個櫃` });
   table($('#tOt'), [{ t: '路線' }, { t: '每晚幾班', n: 1 }, { t: '每晚公里', n: 1 }, { t: '櫃封好後多久出發（分）', n: 1 }, { t: '空車調來', n: 1 }], R.otRt.map(r => [`${esc(r[0])} → ${esc(r[1])}`, fmt(r[2], 1), fmt(r[3]), r[4] == null ? '—' : fmt(r[4]), fmt(r[5]) + '%']));
 
   // ---- 逐晚數字 ----
-  table($('#tNights'), [{ t: '日期' }, { t: '出車（台）', n: 1 }, { t: '里程（萬公里）', n: 1 }, { t: '等待（小時）', n: 1 }, { t: '等待的車頭（台）', n: 1 }, { t: '空車空櫃', n: 1 }, { t: '晚出發', n: 1 }, { t: '晚到', n: 1 }, { t: '加班（班）', n: 1 }, { t: '櫃封好後多久出發', n: 1 }, { t: '沒派到車（櫃）', n: 1 }, { t: '公司警示（筆）', n: 1 }],
-    [...rows].reverse().map(x => Object.assign([`${md(x.d)}（${WD[x.w]}）${x.normal ? '' : ' 不算一般平日'}`, fmt(x.ran), wan(x.km), fmt(x.wMin / 60), fmt(x.wCars), fmt(emptyPct(x), 1) + '%', fmt(pct(x.outLate, x.outBase)) + '%', fmt(pct(x.inLate, x.inBase)) + '%', fmt(x.ot), x.otLag == null ? '—' : fmt(x.otLag) + ' 分', fmt(x.noAssign), fmt(x.warn)], { cls: x.normal ? '' : 'off' })));
+  table($('#tNights'), [{ t: '日期' }, { t: '出車（台）', n: 1 }, { t: '里程（萬公里）', n: 1 }, { t: '超過表定的等待（小時）', n: 1 }, { t: '照班表等（小時）', n: 1 }, { t: '空車空櫃', n: 1 }, { t: '晚出發', n: 1 }, { t: '晚到', n: 1 }, { t: '加班（班）', n: 1 }, { t: '櫃封好後多久出發', n: 1 }, { t: '沒派到車（櫃）', n: 1 }, { t: '公司警示（筆）', n: 1 }],
+    [...rows].reverse().map(x => Object.assign([`${md(x.d)}（${WD[x.w]}）${x.normal ? '' : ' 不算一般平日'}`, fmt(x.ran), wan(x.km), fmt((x.wBox + x.wLate) / 60), fmt(x.wSched / 60), fmt(emptyPct(x), 1) + '%', fmt(pct(x.outLate, x.outBase)) + '%', fmt(pct(x.inLate, x.inBase)) + '%', fmt(x.ot), x.otLag == null ? '—' : fmt(x.otLag) + ' 分', fmt(x.noAssign), fmt(x.warn)], { cls: x.normal ? '' : 'off' })));
 }
 
 /* ================= 改善機會 ================= */
 function drawOpp() {
   const { rows, S, R } = period(), M = D.meta;
-  $('#lOpp').innerHTML = `一般平日每晚 ${fmt(S.ot)} 班加班裡，${fmt(S.local)} 班是原本就停在那一站的車接的，另外 <b>${fmt(S.non)} 班</b>是從別處調車或專程出車。這 ${fmt(S.non)} 班當中，有 <b>${fmt(S.near)} 班（${fmt(pct(S.near, S.non))}%）</b>在櫃封好到出發之間，同一站其實有別的車頭正在等；其中 <b>${f1(S.fit)} 班</b>，那台車的空檔夠跑一趟來回、再回來接自己的下一班（每晚合計 ${fmt(S.fitKm)} 公里的加班）。`;
+  $('#lOpp').innerHTML = `一般平日每晚 ${fmt(S.ot)} 班加班裡，${fmt(S.local)} 班是原本就停在那一站的車接的，另外 <b>${fmt(S.non)} 班</b>是從別處調車或專程出車。這 ${fmt(S.non)} 班當中，有 <b>${fmt(S.near)} 班（${fmt(pct(S.near, S.non))}%）</b>在櫃封好到出發之間，同一站其實有別的車頭在；其中 <b>${f1(S.fit)} 班</b>，那台車的空檔夠跑一趟來回、再回來接自己的下一班（每晚合計 ${fmt(S.fitKm)} 公里的加班；當中 ${f1(S.fitPre)} 班用的是已報到還沒出車的車）。`;
   bars($('#cOpp'), rows, [{ color: 'var(--s1)', get: x => x.otFit }, { color: 'var(--s2)', get: x => x.otNear - x.otFit }], { label: '每晚「同站有車在等」的加班班數', avg: S.near, avgText: fmt(S.near) + ' 班', tip: x => `另外調車的加班 ${fmt(x.otNon)} 班<br>當下同站有車在等 ${fmt(x.otNear)} 班<br>其中空檔夠來回 ${fmt(x.otFit)} 班（${fmt(x.otFitKm)} 公里）` });
-  table($('#tOpp'), [{ t: '加班的出發站' }, { t: '每晚另外調車的加班（班）', n: 1 }, { t: '當下同站有車在等（班）', n: 1 }, { t: '其中空檔夠來回（班）', n: 1 }], R.oppSt.map(r => [esc(r[0] + r[1]), fmt(r[2], 1), fmt(r[3], 1), fmt(r[4], 1)]));
+  table($('#tOpp'), [{ t: '加班的出發站' }, { t: '每晚另外調車的加班（班）', n: 1 }, { t: '當下同站有車（班）', n: 1 }, { t: '其中空檔夠來回（班）', n: 1 }], R.oppSt.map(r => [esc(r[0] + r[1]), fmt(r[2], 1), fmt(r[3], 1), fmt(r[4], 1)]));
 
   const P = R.pairs, cars = new Set(P.map(r => r[2] + '|' + r[0])).size;
   $('#lPair').innerHTML = P.length ? `這段期間 ${S.n} 個一般平日裡，有 ${R.pairsMin} 晚以上都接得上的組合共 <b>${P.length} 組</b>，牽涉 <b>${cars} 台</b>在固定時間等待的車頭。估算方式：來回公里 ÷ 時速 ${M.speed} 公里，加裝卸掛櫃 ${M.handle} 分，跑完還趕得上自己的下一班。` : `這段期間還找不到「一半以上的晚上都接得上」的固定組合。`;
