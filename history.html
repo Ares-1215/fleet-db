@@ -75,6 +75,7 @@ h3{font-size:14.5px;margin:16px 0 6px;font-weight:650}
 .chart svg{display:block;width:100%;height:auto;overflow:visible}
 .chart text{font:11.5px system-ui,"Microsoft JhengHei",sans-serif;fill:var(--muted)}
 .legend{display:flex;gap:6px 16px;flex-wrap:wrap;font-size:12.5px;color:var(--ink2);margin:0 0 6px}
+.cnote{color:var(--muted);font-size:12px;margin:2px 0 8px}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
 .tip{position:fixed;z-index:9;pointer-events:none;background:var(--ink);color:var(--page);font-size:12.5px;line-height:1.45;padding:6px 9px;border-radius:7px;max-width:260px;white-space:nowrap}
 .scroll{overflow:auto;border:1px solid var(--grid);border-radius:8px}
@@ -136,7 +137,7 @@ details li{margin-bottom:5px}
 
 <!-- ================= 每週摘要 ================= -->
 <div class="panel" id="pWeek">
-  <p class="about noprint">一頁看完這一週：跟前一週、近四週平均比起來怎麼樣。可以直接列印或存成 PDF。</p>
+  <p class="about noprint">一頁看完這一週：跟前一週、前四週平均比起來怎麼樣（只拿相同的星期來比）。可以直接列印或存成 PDF。</p>
   <div class="bar noprint">
     <label>看哪一週 <select id="wk" aria-label="看哪一週"></select></label>
     <button type="button" class="btn" id="btnPrint">列印這一頁</button>
@@ -199,6 +200,7 @@ details li{margin-bottom:5px}
 
   <details id="dNights">
     <summary>逐晚數字</summary>
+    <button type="button" class="btn noprint" id="btnCsv" style="margin-top:8px">下載全部晚上的數字（Excel 可以開）</button>
     <div class="scroll" style="max-height:70vh;margin-top:8px"><table id="tNights"></table></div>
   </details>
 </div>
@@ -295,22 +297,23 @@ function bars(host, rows, series, opt) {
   });
   if (opt.avg != null) s += `<line x1="${mL}" x2="${W - mR}" y1="${y(opt.avg)}" y2="${y(opt.avg)}" stroke="var(--ink2)" stroke-width="1" stroke-dasharray="4 3"/><text x="${W - mR}" y="${y(opt.avg) - 5}" text-anchor="end" style="fill:var(--ink2)">一般平日平均 ${esc(opt.avgText)}</text>`;
   rows.forEach((r, i) => { s += `<rect class="hit" data-i="${i}" x="${(mL + i * band).toFixed(1)}" y="${mT}" width="${band.toFixed(1)}" height="${ph}" fill="transparent"/>`; });
-  host.innerHTML = s + '</svg>';
+  host.innerHTML = s + '</svg>' + `<div class="cnote">${rows.some(r => !r.normal) ? '淺色的長條是週末和其他不算一般平日的日子；' : ''}${opt.avg != null ? '虛線是一般平日的平均。' : ''}點一下或滑過長條，可以看那一晚的數字。</div>`;
   const tip = $('#tip');
-  host.onpointermove = e => {
+  const show = e => {
     const h = e.target.closest('.hit'); if (!h) { tip.hidden = true; return; }
     const r = rows[+h.dataset.i];
     tip.innerHTML = `<b>${md(r.d)}（${WD[r.w]}）</b>${r.normal ? '' : '　不算一般平日'}<br>${opt.tip(r)}`; tip.hidden = false;
     const tw = tip.offsetWidth, th = tip.offsetHeight; tip.style.left = Math.max(6, Math.min(innerWidth - tw - 6, e.clientX + 12)) + 'px'; tip.style.top = Math.max(6, e.clientY - th - 12) + 'px';
   };
-  host.onpointerleave = () => { tip.hidden = true; };
+  host.onpointermove = show; host.onpointerdown = show;               // 手機沒有「滑過」，點一下也要出現
+  host.onpointerleave = e => { if (e.pointerType === 'mouse') tip.hidden = true; };   // 手機點出來的留著，點別處或捲動才收
 }
 
 /* ---------- 一段期間的平均（只算一般平日；沒有一般平日就全部算） ---------- */
 function stats(list) {
   const nn = list.filter(x => x.normal), a = nn.length ? nn : list, n = a.length || 1, av = f => sum(a, f) / n;
   const kmAll = av(x => x.kmBox + x.kmBob + x.kmLoad);
-  return { n: a.length, normalOnly: nn.length > 0,
+  return { n: a.length, normalOnly: nn.length > 0, wd: new Set(a.map(x => x.w)),
     ran: av(x => x.ran), wH: av(x => x.wMin) / 60, wCars: av(x => x.wCars), wN: av(x => x.wN), wSched: av(x => x.wSched) / 60, wBox: av(x => x.wBox) / 60, wLate: av(x => x.wLate) / 60, wOver: av(x => x.wBox + x.wLate) / 60,
     kmAll, kmBox: av(x => x.kmBox), kmBob: av(x => x.kmBob), eP: pct(av(x => x.kmBox + x.kmBob), kmAll),
     oB: av(x => x.outBase), oL: av(x => x.outLate), oP: pct(sum(a, x => x.outLate), sum(a, x => x.outBase)), oMin: sum(a, x => x.outLate) ? sum(a, x => x.outLateMin) / sum(a, x => x.outLate) : 0, iP: pct(sum(a, x => x.inLate), sum(a, x => x.inBase)),
@@ -322,16 +325,20 @@ function stats(list) {
 function drawWeek() {
   const all = D.nights, last = all[all.length - 1].d;
   const inRange = (a, b) => all.filter(x => x.d >= a && x.d <= b);
-  const sun = addDays(wk, 6), cur = inRange(wk, sun), prev = inRange(addDays(wk, -7), addDays(wk, -1)), four = inRange(addDays(sun, -27), sun);
-  const A = stats(cur), B = prev.length ? stats(prev) : null, F = stats(four);
+  const sun = addDays(wk, 6), cur = inRange(wk, sun), A = stats(cur);
+  // 只拿相同的星期來比：這一週如果只到週四，前一週和前四週也只取週一到週四（週五的量本來就不一樣）
+  const same = list => list.filter(x => A.wd.has(x.w));
+  const prev = same(inRange(addDays(wk, -7), addDays(wk, -1))), four = same(inRange(addDays(wk, -28), addDays(wk, -1)));
+  const B = prev.length ? stats(prev) : null, F = four.length ? stats(four) : null;
+  const fourWeeks = new Set(four.map(x => mondayOf(x.d))).size, wdText = [...A.wd].sort((a, b) => (a + 6) % 7 - (b + 6) % 7).map(w => WD[w]).join('、');
   const partial = last < sun;
   $('#wkTitle').textContent = `${md(wk)}（一）～ ${md(sun)}（日）這一週`;
-  $('#wkNote').textContent = (partial ? `這一週還沒過完，目前只到 ${md(last)}（${WD[new Date(last + 'T00:00:00').getDay()]}）。` : '') + `每晚平均以這一週的 ${A.n} 個${A.normalOnly ? '一般平日' : '晚上'}計算` + (B ? `；前一週 ${B.n} 個、近四週 ${F.n} 個。` : `；沒有前一週的資料，近四週 ${F.n} 個。`);
+  $('#wkNote').textContent = (partial ? `這一週還沒過完，目前只到 ${md(last)}（${WD[new Date(last + 'T00:00:00').getDay()]}）。` : '') + `這一週用 ${A.n} 個${A.normalOnly ? '一般平日' : '晚上'}（週${wdText}）算每晚平均；前一週、前四週也只拿同樣的星期來比（` + (B ? `前一週 ${B.n} 晚` : '沒有前一週的資料') + (F ? `、前四週 ${F.n} 晚${fourWeeks < 4 ? `，目前只有 ${fourWeeks} 週的資料` : ''}` : '、沒有更早的資料') + '）。';
   // 跟前一週比：數量看增減幾成，比例看差幾個百分點
   const diff = (a, b, isPct) => { if (b == null || a == null) return '—'; const d = isPct ? a - b : (b ? (a - b) / b * 100 : 0); if (Math.abs(d) < (isPct ? 0.5 : 1)) return '差不多'; return (d > 0 ? '多 ' : '少 ') + fmt(Math.abs(d), isPct && Math.abs(d) < 10 ? 1 : 0) + (isPct ? ' 個百分點' : '%'); };
-  const row = (name, get, show, isPct) => [esc(name), `<b>${show(get(A))}</b>`, B ? show(get(B)) : '—', show(get(F)), diff(get(A), B ? get(B) : null, isPct)];
+  const row = (name, get, show, isPct) => [esc(name), `<b>${show(get(A))}</b>`, B ? show(get(B)) : '—', F ? show(get(F)) : '—', diff(get(A), B ? get(B) : null, isPct)];
   const P = v => fmt(v, 1) + '%', H = v => fmt(v) + ' 小時', T = v => fmt(v) + ' 台', C = v => f1(v) + ' 班', M = v => v == null ? '—' : fmt(v) + ' 分';
-  table($('#wkTable'), [{ t: '每晚平均' }, { t: '這一週', n: 1 }, { t: '前一週', n: 1 }, { t: '近四週', n: 1 }, { t: '跟前一週比', n: 1 }], [
+  table($('#wkTable'), [{ t: '每晚平均' }, { t: '這一週', n: 1 }, { t: '前一週', n: 1 }, { t: '前四週', n: 1 }, { t: '跟前一週比', n: 1 }], [
     row('出車', s => s.ran, T),
     { grp: '等待（出車前不算）' }, row('超過表定時間的等待', s => s.wOver, H), row('其中櫃好了還沒走', s => s.wLate, H), row('照班表等', s => s.wSched, H), row('等了 1 小時以上的車頭', s => s.wCars, T),
     { grp: '空車空櫃' }, row('空車空櫃里程占比', s => s.eP, P, true),
@@ -432,7 +439,7 @@ function draw() {
 
 function boot(d) {
   D = d; const M = D.meta; win = M.windows[0].id;
-  $('#hdr').innerHTML = `資料 ${esc(M.from)} ～ ${esc(M.to)}（${M.nights} 晚） · 產生時間 ${esc(M.built)} · 內部資料，請勿外傳`;
+  $('#hdr').innerHTML = `資料 ${esc(M.from)} ～ ${esc(M.to)}（${M.nights} 晚）` + (M.missing ? `，更早的資料還在補（還差 ${fmt(M.missing)} 晚）` : '') + ` · 產生時間 ${esc(M.built)} · 每天中午過後補進前一晚 · 內部資料，請勿外傳`;
   $('#win').innerHTML = M.windows.map(w => `<button type="button" data-v="${w.id}" aria-pressed="${w.id === win}">${esc(w.label)}</button>`).join('');
   // 每週清單：最新的在最上面；預設選「至少有 3 個一般平日」的最新一週
   const weeks = {}; for (const x of D.nights) { const m = mondayOf(x.d); (weeks[m] = weeks[m] || []).push(x); }
@@ -441,7 +448,27 @@ function boot(d) {
   wk = mons.find(m => weeks[m].filter(x => x.normal).length >= 3) || mons[0]; $('#wk').value = wk;
   $('#wk').addEventListener('input', e => { wk = e.target.value; draw(); });
   $('#btnPrint').addEventListener('click', () => print());
-  $('#tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; tab = b.dataset.t; draw(); });
+  const TABS = ['week', 'topics', 'opp', 'warn'];
+  const fromHash = () => { const h = location.hash.slice(1); return TABS.includes(h) ? h : /^sec/.test(h) ? 'topics' : null; };
+  tab = fromHash() || tab;
+  $('#tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; tab = b.dataset.t; try { history.replaceState(null, '', '#' + tab); } catch (err) {} draw(); });
+  addEventListener('hashchange', () => { const t = fromHash(); if (t && t !== tab) { tab = t; draw(); } });
+  // 手機點出來的數字：點圖以外的地方或捲動頁面就收起來
+  document.addEventListener('pointerdown', e => { if (!e.target.closest('.chart')) $('#tip').hidden = true; });
+  addEventListener('scroll', () => { $('#tip').hidden = true; }, { passive: true });
+  // 下載逐晚數字（全部晚上，不只目前選的期間）；開頭加 BOM，Excel 才不會把中文開成亂碼
+  $('#btnCsv').addEventListener('click', () => {
+    const h1 = m => (m / 60).toFixed(1);
+    const cols = [['日期', x => x.d], ['星期', x => WD[x.w]], ['一般平日', x => x.normal ? '是' : '否'], ['出車台數', x => x.ran], ['里程公里', x => x.km],
+      ['在站等待小時', x => h1(x.wMin)], ['照班表等小時', x => h1(x.wSched)], ['過了表定櫃還沒封好小時', x => h1(x.wBox)], ['櫃好了還沒走小時', x => h1(x.wLate)], ['等待次數', x => x.wN], ['等待的車頭台數', x => x.wCars],
+      ['空櫃公里', x => x.kmBox], ['空車頭公里', x => x.kmBob], ['重櫃公里', x => x.kmLoad],
+      ['有表定出發的班次', x => x.outBase], ['晚出發班次', x => x.outLate], ['有表定進站的班次', x => x.inBase], ['晚到班次', x => x.inLate],
+      ['加班班數', x => x.ot], ['加班公里', x => x.otKm], ['櫃封好後多久出發_中位數分', x => x.otLag ?? ''], ['原地的車接', x => x.otLocal], ['中途空車調來', x => x.otMoved], ['調車公里', x => x.otMovedKm], ['當晚第一趟就跑加班', x => x.otFirst], ['超過1小時沒派到車_櫃', x => x.noAssign],
+      ['另外調車的加班', x => x.otNon], ['其中同站有車', x => x.otNear], ['其中空檔夠來回', x => x.otFit], ['公司警示筆數', x => x.warn], ['有人回覆筆數', x => x.wReply]];
+    const csv = '\ufeff' + [cols.map(c => c[0]).join(','), ...D.nights.map(x => cols.map(c => c[1](x)).join(','))].join('\r\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = `歷史統計_逐晚數字_${D.meta.from}_${D.meta.to}.csv`;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  });
   $('#win').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; win = b.dataset.v; document.querySelectorAll('#win button').forEach(x => x.setAttribute('aria-pressed', x === b)); draw(); });
   $('#lateBy').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; lateBy = b.dataset.v; document.querySelectorAll('#lateBy button').forEach(x => x.setAttribute('aria-pressed', x === b)); draw(); });
   draw();
