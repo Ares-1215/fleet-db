@@ -10,21 +10,21 @@
   color-scheme: light;
   --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
   --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10); --wash:rgba(11,11,11,.035);
-  --s1:#2a78d6; --s1-soft:#cde2fb; --s2:#eb6834; --warn:#d03b3b; --warn-soft:rgba(208,59,59,.10);
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
 }
 @media (prefers-color-scheme: dark){
   :root:where(:not([data-theme="light"])){
     color-scheme: dark;
     --page:#0d0d0d; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#898781;
     --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10); --wash:rgba(255,255,255,.05);
-    --s1:#3987e5; --s1-soft:#0d366b; --s2:#d95926; --warn:#e66767; --warn-soft:rgba(230,103,103,.14);
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70;
   }
 }
 :root[data-theme="dark"]{
   color-scheme: dark;
   --page:#0d0d0d; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#898781;
   --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10); --wash:rgba(255,255,255,.05);
-  --s1:#3987e5; --s1-soft:#0d366b; --s2:#d95926; --warn:#e66767; --warn-soft:rgba(230,103,103,.14);
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
@@ -32,22 +32,30 @@ html{scroll-behavior:smooth}
 @media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
 body{background:var(--page);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI","Microsoft JhengHei",sans-serif}
 .wrap{max-width:1180px;margin:0 auto;padding:16px 16px 56px}
-header{display:flex;gap:8px 18px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+header{display:flex;gap:8px 18px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
 header h1{font-size:22px;margin:0;font-weight:650}
 header .sub{color:var(--ink2);font-size:13px;flex-basis:100%}
 a{color:var(--s1)}
-/* 三個網頁共用的主選單 */
+/* 四個網頁共用的主選單 */
 .nav{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
 .nav a{padding:5px 13px;border-radius:999px;color:var(--ink2);text-decoration:none;font-size:14px;border:1px solid var(--axis)}
 .nav a:hover{color:var(--ink)}
 .nav a[aria-current="page"]{background:var(--ink);color:var(--page);border-color:var(--ink);font-weight:600}
 :focus-visible{outline:2px solid var(--s1);outline-offset:2px}
+/* 這一頁的四個分頁 */
+.tabs{display:flex;gap:2px;flex-wrap:wrap;border-bottom:1px solid var(--grid);margin-bottom:14px}
+.tabs button{font:inherit;font-size:15px;color:var(--ink2);background:none;border:0;border-bottom:2px solid transparent;padding:8px 14px;cursor:pointer;margin-bottom:-1px}
+.tabs button:hover{color:var(--ink)}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink);font-weight:650}
+.about{color:var(--ink2);font-size:14px;margin:0 0 12px;max-width:64em}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;min-width:0}
 .bar{display:flex;gap:8px 12px;flex-wrap:wrap;align-items:center;margin-bottom:12px;font-size:13.5px;color:var(--ink2)}
 .seg{display:inline-flex;border:1px solid var(--axis);border-radius:8px;overflow:hidden}
 .seg button{font:inherit;font-size:13.5px;color:var(--ink2);background:var(--surface);border:0;padding:6px 12px;cursor:pointer}
 .seg button+button{border-left:1px solid var(--axis)}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--page)}
+select,.btn{font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--axis);border-radius:8px;padding:6px 10px}
+.btn{cursor:pointer}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:14px}
 a.tile{display:block;color:inherit;text-decoration:none;transition:border-color .15s}
 a.tile:hover{border-color:var(--s1)}
@@ -59,7 +67,7 @@ a.tile:hover{border-color:var(--s1)}
 section.card{margin-bottom:14px;scroll-margin-top:12px}
 h2{font-size:18px;margin:0 0 2px;font-weight:650}
 h3{font-size:14.5px;margin:16px 0 6px;font-weight:650}
-.hint{color:var(--ink2);font-size:13px;margin:0 0 10px}
+.hint{color:var(--ink2);font-size:13px;margin:0 0 10px;max-width:64em}
 .lead{font-size:15.5px;margin:0 0 12px;max-width:62em}
 .lead b{font-weight:650}
 .chart{position:relative;margin-bottom:4px}
@@ -67,26 +75,37 @@ h3{font-size:14.5px;margin:16px 0 6px;font-weight:650}
 .chart text{font:11.5px system-ui,"Microsoft JhengHei",sans-serif;fill:var(--muted)}
 .legend{display:flex;gap:6px 16px;flex-wrap:wrap;font-size:12.5px;color:var(--ink2);margin:0 0 6px}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
-.tip{position:fixed;z-index:9;pointer-events:none;background:var(--ink);color:var(--page);font-size:12.5px;line-height:1.45;padding:6px 9px;border-radius:7px;max-width:240px;white-space:nowrap}
+.tip{position:fixed;z-index:9;pointer-events:none;background:var(--ink);color:var(--page);font-size:12.5px;line-height:1.45;padding:6px 9px;border-radius:7px;max-width:260px;white-space:nowrap}
 .scroll{overflow:auto;border:1px solid var(--grid);border-radius:8px}
 table{border-collapse:collapse;width:100%;font-size:14px}
 th,td{padding:6px 10px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--grid)}
 tbody tr:last-child td{border-bottom:0}
 th{color:var(--ink2);font-weight:600;font-size:12.5px;background:var(--surface);position:sticky;top:0}
 td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+td.wrapc{white-space:normal;min-width:14em}
 tr.off td{color:var(--muted)}
+tr.grp td{background:var(--wash);color:var(--ink2);font-weight:650;font-size:12.5px;padding:4px 10px}
 .more{display:inline-block;margin-top:10px;font-size:13.5px}
+.cols2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:14px;margin-top:14px}
 details{margin-bottom:14px}
 details>summary{cursor:pointer;font-weight:650;font-size:16px;padding:4px 0}
 details ul{margin:8px 0 0;padding-left:1.3em;max-width:64em}
 details li{margin-bottom:5px}
 .empty{color:var(--muted);font-size:13.5px;padding:14px 4px}
-.locked .tiles,.locked .bar,.locked section,.locked details{display:none}
+.locked .tabs,.locked .bar,.locked .panel,.locked details{display:none}
 #gate{max-width:380px;margin:48px auto}
 #gate form{display:flex;gap:8px;margin-top:12px}
 #gate input{flex:1;min-width:0;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--axis);border-radius:8px;padding:6px 10px}
 #gate button{font:inherit;color:#fff;background:var(--s1);border:0;border-radius:8px;padding:8px 16px;cursor:pointer}
 #gate .msg{color:var(--ink2);font-size:13px;margin-top:10px;min-height:1.5em}
+/* 列印（每週摘要用）：只印內容，白底黑字 */
+@media print{
+  :root{--page:#fff;--surface:#fff;--ink:#000;--ink2:#333;--muted:#555;--grid:#ccc;--axis:#999;--border:#ccc;--wash:#f1f1f1}
+  .nav,.tabs,.bar,details,.noprint,#gate{display:none !important}
+  .wrap{max-width:none;padding:0}
+  .card{border:0;padding:0}
+  .scroll{overflow:visible;border:0}
+}
 </style>
 </head>
 <body>
@@ -102,66 +121,134 @@ details li{margin-bottom:5px}
   <div class="msg" role="status"></div>
 </div>
 
-<div class="bar">
+<div class="tabs" role="tablist" id="tabs">
+  <button role="tab" data-t="week" aria-selected="true">每週摘要</button>
+  <button role="tab" data-t="topics" aria-selected="false">四個主題</button>
+  <button role="tab" data-t="opp" aria-selected="false">改善機會</button>
+  <button role="tab" data-t="warn" aria-selected="false">公司警示</button>
+</div>
+
+<div class="bar" id="perBar" hidden>
   <span>期間</span><span class="seg" id="win" role="group" aria-label="期間"></span>
   <span id="winNote"></span>
 </div>
 
-<div class="tiles" id="tiles"></div>
+<!-- ================= 每週摘要 ================= -->
+<div class="panel" id="pWeek">
+  <p class="about noprint">一頁看完這一週：跟前一週、近四週平均比起來怎麼樣。可以直接列印或存成 PDF。</p>
+  <div class="bar noprint">
+    <label>看哪一週 <select id="wk" aria-label="看哪一週"></select></label>
+    <button type="button" class="btn" id="btnPrint">列印這一頁</button>
+  </div>
+  <section class="card">
+    <h2 id="wkTitle"></h2>
+    <p class="hint" id="wkNote"></p>
+    <p class="lead" id="wkLead"></p>
+    <div class="scroll"><table id="wkTable"></table></div>
+    <div class="cols2">
+      <div><h3 style="margin-top:0">這一週等最多的三個站</h3><div class="scroll"><table id="wkWait"></table></div></div>
+      <div><h3 style="margin-top:0">這一週加班最多的三條路線</h3><div class="scroll"><table id="wkOt"></table></div></div>
+    </div>
+  </section>
+</div>
 
-<section class="card" id="secWait">
-  <h2>等待</h2>
-  <p class="hint">車頭在同一站，從進站到下一趟離站，等了 1 到 6 小時的（含裝卸、掛櫃與空等）。</p>
-  <p class="lead" id="lWait"></p>
-  <div class="chart" id="cWait"></div>
-  <h3>哪一站等最多</h3>
-  <div class="scroll"><table id="tWait"></table></div>
-  <a class="more" href="wait.html">看每一站幾點在等、哪些車頭固定在等 ›</a>
-</section>
+<!-- ================= 四個主題 ================= -->
+<div class="panel" id="pTopics" hidden>
+  <p class="about">等待、空車空櫃里程、準點、加班，各看每晚趨勢和排行。</p>
+  <div class="tiles" id="tiles"></div>
 
-<section class="card" id="secEmpty">
-  <h2>空車空櫃里程</h2>
-  <p class="hint">沒有載貨的里程：拉空櫃，或只有車頭沒拉櫃。每晚數字取自行駛日報。</p>
-  <p class="lead" id="lEmpty"></p>
-  <div class="legend"><span><i style="background:var(--s1)"></i>拉空櫃</span><span><i style="background:var(--s2)"></i>只有車頭</span></div>
-  <div class="chart" id="cEmpty"></div>
-  <h3>哪些路段空跑最多</h3>
-  <div class="scroll"><table id="tEmpty"></table></div>
-</section>
+  <section class="card" id="secWait">
+    <h2>等待</h2>
+    <p class="hint">車頭在同一站，從進站到下一趟離站，等了 1 到 6 小時的。</p>
+    <p class="lead" id="lWait"></p>
+    <div class="legend"><span><i style="background:var(--s1)"></i>等櫃：車到了，下一班的櫃還沒封好</span><span><i style="background:var(--s2)"></i>等表定時間：櫃好了，還沒到表定出發時間</span><span><i style="background:var(--s3)"></i>該走了還沒走：櫃好了、時間也到了</span></div>
+    <div class="chart" id="cWait"></div>
+    <h3>哪一站等最多</h3>
+    <div class="scroll"><table id="tWait"></table></div>
+    <a class="more" href="wait.html">看每一站幾點在等、哪些車頭固定在等 ›</a>
+  </section>
 
-<section class="card" id="secLate">
-  <h2>準點</h2>
-  <p class="hint">有表定時間的班次，實際離站比表定晚 30 分以上算「晚出發」，實際進站比表定晚 30 分以上算「晚到」。</p>
-  <p class="lead" id="lLate"></p>
-  <div class="chart" id="cLate"></div>
-  <h3>哪裡最常晚出發 <span class="seg" id="lateBy" role="group" aria-label="排行方式" style="margin-left:8px;vertical-align:middle"><button type="button" data-v="st" aria-pressed="true">看出發站</button><button type="button" data-v="trip" aria-pressed="false">看班次</button></span></h3>
-  <div class="scroll"><table id="tLate"></table></div>
-</section>
+  <section class="card" id="secEmpty">
+    <h2>空車空櫃里程</h2>
+    <p class="hint">沒有載貨的里程：拉空櫃，或只有車頭沒拉櫃。每晚數字取自行駛日報。</p>
+    <p class="lead" id="lEmpty"></p>
+    <div class="legend"><span><i style="background:var(--s1)"></i>拉空櫃</span><span><i style="background:var(--s2)"></i>只有車頭</span></div>
+    <div class="chart" id="cEmpty"></div>
+    <h3>哪些路段空跑最多</h3>
+    <div class="scroll"><table id="tEmpty"></table></div>
+  </section>
 
-<section class="card" id="secOt">
-  <h2>加班</h2>
-  <p class="hint">班次名稱有「加班」的班次，以實際有出發的為準。</p>
-  <p class="lead" id="lOt"></p>
-  <div class="chart" id="cOt"></div>
-  <h3>哪些路線最常加班</h3>
-  <div class="scroll"><table id="tOt"></table></div>
-</section>
+  <section class="card" id="secLate">
+    <h2>準點</h2>
+    <p class="hint">有表定時間的班次，實際離站比表定晚 30 分以上算「晚出發」，實際進站比表定晚 30 分以上算「晚到」。</p>
+    <p class="lead" id="lLate"></p>
+    <div class="chart" id="cLate"></div>
+    <h3>哪裡最常晚出發 <span class="seg" id="lateBy" role="group" aria-label="排行方式" style="margin-left:8px;vertical-align:middle"><button type="button" data-v="st" aria-pressed="true">看出發站</button><button type="button" data-v="trip" aria-pressed="false">看班次</button></span></h3>
+    <div class="scroll"><table id="tLate"></table></div>
+  </section>
 
-<details id="dNights">
-  <summary>逐晚數字</summary>
-  <div class="scroll" style="max-height:70vh;margin-top:8px"><table id="tNights"></table></div>
-</details>
+  <section class="card" id="secOt">
+    <h2>加班</h2>
+    <p class="hint">班次名稱有「加班」的班次，以實際有出發的為準。</p>
+    <p class="lead" id="lOt"></p>
+    <div class="chart" id="cOt"></div>
+    <h3>哪些路線最常加班</h3>
+    <div class="scroll"><table id="tOt"></table></div>
+  </section>
+
+  <details id="dNights">
+    <summary>逐晚數字</summary>
+    <div class="scroll" style="max-height:70vh;margin-top:8px"><table id="tNights"></table></div>
+  </details>
+</div>
+
+<!-- ================= 改善機會 ================= -->
+<div class="panel" id="pOpp" hidden>
+  <p class="about">從紀錄裡找「車在等」和「加班要車」剛好對得上的地方。這裡列的是候選名單：沒有考慮司機工時、車型櫃型和當晚貨量，要不要做由調度判斷。</p>
+  <section class="card">
+    <h2>一、加班可以就近派車嗎</h2>
+    <p class="hint">不是原地的車接的加班，從櫃封好到實際出發這段時間，同一站有沒有別的車頭正在等。</p>
+    <p class="lead" id="lOpp"></p>
+    <div class="legend"><span><i style="background:var(--s1)"></i>有車在等，而且空檔夠跑一趟來回</span><span><i style="background:var(--s2)"></i>有車在等，但空檔不夠來回</span></div>
+    <div class="chart" id="cOpp"></div>
+    <h3>哪些站最常「車在等、加班卻另外調車」</h3>
+    <div class="scroll"><table id="tOpp"></table></div>
+  </section>
+  <section class="card">
+    <h2>二、可以排進班表的組合</h2>
+    <p class="hint">同一台車頭、在同一站，多數晚上都剛好接得上同一條加班路線。這些最固定，可以考慮直接排進班表。</p>
+    <p class="lead" id="lPair"></p>
+    <div class="scroll" style="max-height:70vh"><table id="tPair"></table></div>
+  </section>
+</div>
+
+<!-- ================= 公司警示 ================= -->
+<div class="panel" id="pWarn" hidden>
+  <p class="about">公司「班次即時監控警示」每晚發出的警示，歸到這裡的四個主題來看：哪一種最多、有多少是天天都在叫的。</p>
+  <section class="card">
+    <h2>公司警示</h2>
+    <p class="lead" id="lWarn"></p>
+    <div class="chart" id="cWarn"></div>
+    <h3>每一種警示有多少、有多少是天天都在叫的</h3>
+    <div class="scroll"><table id="tWarn"></table></div>
+    <p class="hint" style="margin-top:10px" id="warnNote"></p>
+  </section>
+</div>
 
 <details>
   <summary>數字怎麼算</summary>
   <ul>
     <li><b>一般平日</b>：週一到週五，而且當晚出車台數不低於同星期平常的七成（扣掉春節、連假、颱風這類特別少的日子）。平均值只算一般平日，圖上淺色的是週末與其他日子。</li>
-    <li><b>等待</b>：同一台車頭在同一站，從「進站」到「下一趟離站」的時間，1 小時以上、6 小時以內才算（超過 6 小時當作下班或分段出勤）。含裝卸、掛櫃與空等，目前分不出哪一段是空等。</li>
+    <li><b>等待</b>：同一台車頭在同一站，從「進站」到「下一趟離站」的時間，1 小時以上、6 小時以內才算（超過 6 小時當作下班或分段出勤）。</li>
+    <li><b>等待拆成三段</b>：「等櫃」＝進站到下一班的櫃封好；「等表定時間」＝櫃封好到表定出發時間；「該走了還沒走」＝櫃封好、表定時間也到了之後，到實際離站。下一班是空車或空櫃（沒有封櫃時間）的，一進站就算櫃好了；沒有表定時間的臨時班次，櫃好了就算該走了。</li>
     <li><b>空車空櫃里程</b>：行駛日報裡的「空櫃里程」加「空車頭里程」；占比是除以（空櫃＋空車頭＋重櫃）。路段排行是依班次名稱判斷（名稱有「空」字算拉空櫃、沒有名稱的移動算只有車頭），會比行駛日報的數字少一些，只用來看哪些路段多。</li>
     <li><b>晚出發、晚到</b>：30 分的標準跟公司「班次即時監控警示」的「晚放車」「延誤進站」一樣。只比有表定時間的班次；臨時加開、沒有表定時間的不列入。前一班晚到，下一班通常跟著晚出發，所以同一台車的幾班可能都算晚。</li>
     <li><b>加班</b>：班次名稱有「加班」而且實際有離站的班次。「封櫃後多久出發」＝離站時間減封櫃時間，取中位數（一半的班次比這個久）。「原地的車」＝前一趟剛好停在加班的出發站；「空車調來」＝前一趟是空車或空櫃開到加班的出發站。</li>
-    <li><b>超過 1 小時沒派到車</b>：公司「班次即時監控警示」當晚發出「貨櫃已傳輸但尚未指派」警示的加班櫃數。</li>
-    <li><b>資料來源</b>：班次的表定與實際時間來自公司「班次即時監控警示」背後的班次清單（跟即時看板同一個來源）；出車台數與里程來自報表平台的行駛日報明細。每天中午過後補進前一晚。</li>
+    <li><b>超過 1 小時沒派到車</b>：公司警示當晚發出「貨櫃已傳輸但尚未指派」的加班櫃數。</li>
+    <li><b>加班可以就近派車</b>：只看不是原地的車接的加班。「同站有車在等」＝櫃封好到加班實際出發之間，同一站有別的車頭正在等（等待 1 小時以上的那種）。「空檔夠來回」＝那台車從櫃封好（或它進站）起算，到它自己下一趟離站之前，夠跑一趟加班再空車回來：來回公里 ÷ 時速 55 公里，再加裝卸掛櫃 30 分；一台車一晚只算一次。</li>
+    <li><b>可以排進班表的組合</b>：同一台車頭、同一站、同一條加班路線，期間內一半以上的一般平日都符合「空檔夠來回」。「平常幾點在等」是這些晚上進站、離站時間的中位數。</li>
+    <li><b>公司警示</b>：警示的名稱與標準照公司系統的設定。「天天都叫」＝同一個班次（沒有班次的看車頭），期間內七成以上的一般平日都被同一種警示叫到。</li>
+    <li><b>資料來源</b>：班次的表定與實際時間、警示，來自公司「班次即時監控警示」（跟即時看板同一個來源）；出車台數與里程來自報表平台的行駛日報明細。每天中午過後補進前一晚。</li>
   </ul>
 </details>
 </div>
@@ -171,18 +258,23 @@ details li{margin-bottom:5px}
 const EMBED = /*__DATA__*/null, ONLINE = {"fn":"https://hmqnlovyzlvvnkqmfwtt.supabase.co/functions/v1/fleetdb","key":"hist"};
 const $ = s => document.querySelector(s);
 const fmt = (n, d = 0) => n == null || isNaN(n) ? '—' : Number(n).toLocaleString('zh-TW', { minimumFractionDigits: d, maximumFractionDigits: d });
+const f1 = n => fmt(n, n != null && Math.abs(n) < 10 ? 1 : 0);          // 小於 10 的留一位小數
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const WD = '日一二三四五六';
 const sum = (a, f) => a.reduce((s, x) => s + f(x), 0);
 const wan = k => fmt(k / 10000, 1);                       // 公里 → 萬公里
 const pct = (a, b) => b ? a / b * 100 : 0;
+const md = d => `${+d.slice(5, 7)}/${+d.slice(8)}`;
 const emptyPct = x => pct(x.kmBox + x.kmBob, x.kmBox + x.kmBob + x.kmLoad);
-let D = null, win = '', lateBy = 'st';
+const medOf = a => { const s = a.filter(x => x != null).sort((p, q) => p - q); return s.length ? s[s.length >> 1] : null; };
+const addDays = (d, n) => { const t = new Date(d + 'T00:00:00'); t.setDate(t.getDate() + n); return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`; };
+const mondayOf = d => addDays(d, -((new Date(d + 'T00:00:00').getDay() + 6) % 7));
+let D = null, tab = 'week', win = '', lateBy = 'st', wk = '';
 
-const table = (host, heads, rows, emptyText) => { host.innerHTML = rows.length ? '<thead><tr>' + heads.map(h => `<th class="${h.n ? 'n' : ''}">${esc(h.t)}</th>`).join('') + '</tr></thead><tbody>' + rows.map(r => `<tr class="${r.cls || ''}">` + r.map((c, i) => `<td class="${heads[i].n ? 'n' : ''}">${c}</td>`).join('') + '</tr>').join('') + '</tbody>' : `<tbody><tr><td class="empty">${esc(emptyText || '這段期間沒有資料。')}</td></tr></tbody>`; };
+const table = (host, heads, rows, emptyText) => { host.innerHTML = rows.length ? '<thead><tr>' + heads.map(h => `<th class="${h.n ? 'n' : ''}">${esc(h.t)}</th>`).join('') + '</tr></thead><tbody>' + rows.map(r => r.grp ? `<tr class="grp"><td colspan="${heads.length}">${esc(r.grp)}</td></tr>` : `<tr class="${r.cls || ''}">` + r.map((c, i) => `<td class="${heads[i].n ? 'n' : ''}${heads[i].w ? ' wrapc' : ''}">${c}</td>`).join('') + '</tr>').join('') + '</tbody>' : `<tbody><tr><td class="empty">${esc(emptyText || '這段期間沒有資料。')}</td></tr></tbody>`; };
 
-/* ---------- 每晚一根的長條圖：一般平日用主色、其他日子淺色；虛線是一般平日的平均 ---------- */
-// series：[{ color, get(night) }]（兩個以上就疊起來）；tipText(night) 回傳滑過去要顯示的文字
+/* ---------- 每晚一根的長條圖：一般平日用實色、其他日子淺色；虛線是一般平日的平均 ---------- */
+// series：[{ color, get(night) }]（兩個以上就疊起來）；opt.tip(night) 回傳滑過去要顯示的文字
 function bars(host, rows, series, opt) {
   const W = Math.max(300, host.clientWidth || 900), H = 210, mL = 44, mR = 8, mT = 10, mB = 22, pw = W - mL - mR, ph = H - mT - mB;
   const tot = r => sum(series, s => s.get(r) || 0);
@@ -191,13 +283,13 @@ function bars(host, rows, series, opt) {
   const top = Math.ceil(max / step) * step, y = v => mT + ph - v / top * ph;
   // 晚數少的時候長條不要撐太寬（每根最多 36）
   const band = Math.min(pw / rows.length, 36), gap = band >= 7 ? 2 : band >= 4 ? 1 : 0, bw = Math.max(1, band - gap), rad = bw >= 6 ? 2 : 0;
-  let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${esc(opt.label)}（詳細數字見下方「逐晚數字」）">`;
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${esc(opt.label)}（詳細數字見「四個主題」最下面的逐晚數字）">`;
   for (let v = 0; v <= top + 1e-9; v += step) s += `<line x1="${mL}" x2="${W - mR}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)" stroke-width="1"/><text x="${mL - 6}" y="${y(v) + 4}" text-anchor="end">${esc(opt.axis ? opt.axis(v) : fmt(v))}</text>`;
   let lastLab = -1e9;
   rows.forEach((r, i) => {
     const x = mL + i * band + gap / 2; let base = 0;
     series.forEach(q => { const v = q.get(r) || 0; if (v <= 0) return; const y1 = y(base + v), h = Math.max(0, y(base) - y1 - (base > 0 ? 2 : 0)); s += `<rect x="${x.toFixed(1)}" y="${y1.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="${rad}" fill="${q.color}" opacity="${r.normal ? 1 : .38}"/>`; base += v; });
-    if (r.w === 1 && x - lastLab > 46) { s += `<text x="${(x + bw / 2).toFixed(1)}" y="${H - 6}" text-anchor="middle">${+r.d.slice(5, 7)}/${+r.d.slice(8)}</text>`; lastLab = x; }
+    if (r.w === 1 && x - lastLab > 46) { s += `<text x="${(x + bw / 2).toFixed(1)}" y="${H - 6}" text-anchor="middle">${md(r.d)}</text>`; lastLab = x; }
   });
   if (opt.avg != null) s += `<line x1="${mL}" x2="${W - mR}" y1="${y(opt.avg)}" y2="${y(opt.avg)}" stroke="var(--ink2)" stroke-width="1" stroke-dasharray="4 3"/><text x="${W - mR}" y="${y(opt.avg) - 5}" text-anchor="end" style="fill:var(--ink2)">一般平日平均 ${esc(opt.avgText)}</text>`;
   rows.forEach((r, i) => { s += `<rect class="hit" data-i="${i}" x="${(mL + i * band).toFixed(1)}" y="${mT}" width="${band.toFixed(1)}" height="${ph}" fill="transparent"/>`; });
@@ -206,68 +298,155 @@ function bars(host, rows, series, opt) {
   host.onpointermove = e => {
     const h = e.target.closest('.hit'); if (!h) { tip.hidden = true; return; }
     const r = rows[+h.dataset.i];
-    tip.innerHTML = `<b>${+r.d.slice(5, 7)}/${+r.d.slice(8)}（${WD[r.w]}）</b>${r.normal ? '' : '　不算一般平日'}<br>${opt.tip(r)}`; tip.hidden = false;
+    tip.innerHTML = `<b>${md(r.d)}（${WD[r.w]}）</b>${r.normal ? '' : '　不算一般平日'}<br>${opt.tip(r)}`; tip.hidden = false;
     const tw = tip.offsetWidth, th = tip.offsetHeight; tip.style.left = Math.max(6, Math.min(innerWidth - tw - 6, e.clientX + 12)) + 'px'; tip.style.top = Math.max(6, e.clientY - th - 12) + 'px';
   };
   host.onpointerleave = () => { tip.hidden = true; };
 }
 
-function draw() {
-  const M = D.meta, w = M.windows.find(x => x.id === win) || M.windows[0];
-  const rows = D.nights.slice(-w.n), nn = rows.filter(x => x.normal), n = nn.length || 1, av = f => sum(nn, f) / n;
-  const R = D.rank[w.id];
-  $('#winNote').textContent = `${rows[0].d.slice(5).replace('-', '/')} ～ ${rows[rows.length - 1].d.slice(5).replace('-', '/')}，共 ${rows.length} 晚；平均只算其中 ${nn.length} 個一般平日`;
-  // 四個主題的平均（一般平日每晚）
-  const wH = av(x => x.wMin) / 60, wCars = av(x => x.wCars), wN = av(x => x.wN);
-  const kmAll = av(x => x.kmBox + x.kmBob + x.kmLoad), kmBox = av(x => x.kmBox), kmBob = av(x => x.kmBob), eP = pct(kmBox + kmBob, kmAll);
-  const oB = av(x => x.outBase), oL = av(x => x.outLate), oP = pct(oL, oB), oMin = sum(nn, x => x.outLate) ? sum(nn, x => x.outLateMin) / sum(nn, x => x.outLate) : 0, iP = pct(av(x => x.inLate), av(x => x.inBase));
-  const ot = av(x => x.ot), otKm = av(x => x.otKm), lags = nn.map(x => x.otLag).filter(x => x != null).sort((a, b) => a - b), lag = lags.length ? lags[lags.length >> 1] : null;
-  const moved = av(x => x.otMoved), local = av(x => x.otLocal), movedKm = av(x => x.otMovedKm), na = av(x => x.noAssign);
+/* ---------- 一段期間的平均（只算一般平日；沒有一般平日就全部算） ---------- */
+function stats(list) {
+  const nn = list.filter(x => x.normal), a = nn.length ? nn : list, n = a.length || 1, av = f => sum(a, f) / n;
+  const kmAll = av(x => x.kmBox + x.kmBob + x.kmLoad);
+  return { n: a.length, normalOnly: nn.length > 0,
+    ran: av(x => x.ran), wH: av(x => x.wMin) / 60, wCars: av(x => x.wCars), wN: av(x => x.wN), wBox: av(x => x.wBox) / 60, wPlan: av(x => x.wPlan) / 60, wLate: av(x => x.wLate) / 60,
+    kmAll, kmBox: av(x => x.kmBox), kmBob: av(x => x.kmBob), eP: pct(av(x => x.kmBox + x.kmBob), kmAll),
+    oB: av(x => x.outBase), oL: av(x => x.outLate), oP: pct(sum(a, x => x.outLate), sum(a, x => x.outBase)), oMin: sum(a, x => x.outLate) ? sum(a, x => x.outLateMin) / sum(a, x => x.outLate) : 0, iP: pct(sum(a, x => x.inLate), sum(a, x => x.inBase)),
+    ot: av(x => x.ot), otKm: av(x => x.otKm), lag: medOf(a.map(x => x.otLag)), local: av(x => x.otLocal), moved: av(x => x.otMoved), movedKm: av(x => x.otMovedKm), flex: av(x => x.otFlex), na: av(x => x.noAssign),
+    non: av(x => x.otNon), near: av(x => x.otNear), fit: av(x => x.otFit), fitKm: av(x => x.otFitKm), warn: av(x => x.warn) };
+}
 
+/* ================= 每週摘要 ================= */
+function drawWeek() {
+  const all = D.nights, last = all[all.length - 1].d;
+  const inRange = (a, b) => all.filter(x => x.d >= a && x.d <= b);
+  const sun = addDays(wk, 6), cur = inRange(wk, sun), prev = inRange(addDays(wk, -7), addDays(wk, -1)), four = inRange(addDays(sun, -27), sun);
+  const A = stats(cur), B = prev.length ? stats(prev) : null, F = stats(four);
+  const partial = last < sun;
+  $('#wkTitle').textContent = `${md(wk)}（一）～ ${md(sun)}（日）這一週`;
+  $('#wkNote').textContent = (partial ? `這一週還沒過完，目前只到 ${md(last)}（${WD[new Date(last + 'T00:00:00').getDay()]}）。` : '') + `每晚平均以這一週的 ${A.n} 個${A.normalOnly ? '一般平日' : '晚上'}計算` + (B ? `；前一週 ${B.n} 個、近四週 ${F.n} 個。` : `；沒有前一週的資料，近四週 ${F.n} 個。`);
+  // 跟前一週比：數量看增減幾成，比例看差幾個百分點
+  const diff = (a, b, isPct) => { if (b == null || a == null) return '—'; const d = isPct ? a - b : (b ? (a - b) / b * 100 : 0); if (Math.abs(d) < (isPct ? 0.5 : 1)) return '差不多'; return (d > 0 ? '多 ' : '少 ') + fmt(Math.abs(d), isPct && Math.abs(d) < 10 ? 1 : 0) + (isPct ? ' 個百分點' : '%'); };
+  const row = (name, get, show, isPct) => [esc(name), `<b>${show(get(A))}</b>`, B ? show(get(B)) : '—', show(get(F)), diff(get(A), B ? get(B) : null, isPct)];
+  const P = v => fmt(v, 1) + '%', H = v => fmt(v) + ' 小時', T = v => fmt(v) + ' 台', C = v => f1(v) + ' 班', M = v => v == null ? '—' : fmt(v) + ' 分';
+  table($('#wkTable'), [{ t: '每晚平均' }, { t: '這一週', n: 1 }, { t: '前一週', n: 1 }, { t: '近四週', n: 1 }, { t: '跟前一週比', n: 1 }], [
+    row('出車', s => s.ran, T),
+    { grp: '等待' }, row('車頭在站內等待', s => s.wH, H), row('等了 1 小時以上的車頭', s => s.wCars, T), row('其中「該走了還沒走」', s => s.wLate, H),
+    { grp: '空車空櫃' }, row('空車空櫃里程占比', s => s.eP, P, true),
+    { grp: '準點' }, row('晚出發 30 分以上', s => s.oP, P, true), row('晚到 30 分以上', s => s.iP, P, true),
+    { grp: '加班' }, row('加班', s => s.ot, C), row('櫃封好後多久出發（一半的班次超過）', s => s.lag, M), row('超過 1 小時沒派到車', s => s.na, v => f1(v) + ' 個櫃'),
+    { grp: '改善機會' }, row('同站有車在等、加班卻另外調車', s => s.near, C), row('其中空檔夠跑來回', s => s.fit, C),
+    { grp: '公司警示' }, row('警示', s => s.warn, v => fmt(v) + ' 筆'),
+  ]);
+  // 一句話：變化最大的兩項
+  if (B) {
+    const items = [['等待時數', A.wH, B.wH, 0], ['空車空櫃占比', A.eP, B.eP, 1], ['晚出發比例', A.oP, B.oP, 1], ['加班班數', A.ot, B.ot, 0]].map(([nm, a, b, p]) => ({ nm, d: p ? a - b : (b ? (a - b) / b * 100 : 0), p }));
+    const big = items.filter(x => Math.abs(x.d) >= (x.p ? 1 : 3)).sort((x, y) => Math.abs(y.d) / (y.p ? 1 : 3) - Math.abs(x.d) / (x.p ? 1 : 3));
+    const same = items.filter(x => !big.includes(x));
+    $('#wkLead').innerHTML = '跟前一週比：' + (big.length ? big.map(x => `<b>${x.nm}${x.d > 0 ? '多' : '少'} ${fmt(Math.abs(x.d), x.p ? 1 : 0)}${x.p ? ' 個百分點' : '%'}</b>`).join('、') : '四個主題都差不多') + (big.length && same.length ? `；${same.map(x => x.nm).join('、')}差不多。` : '。') + (partial ? '（這一週還沒過完，先參考。）' : '');
+  } else $('#wkLead').textContent = '這是資料裡最早的一週，沒有前一週可以比。';
+  const R = D.weekRank[wk] || { waitSt: [], otRt: [] };
+  table($('#wkWait'), [{ t: '站所' }, { t: '每晚等待（小時）', n: 1 }, { t: '每晚幾次', n: 1 }], R.waitSt.map(r => [esc(r[0] + r[1]), fmt(r[2], 1), fmt(r[3], 1)]));
+  table($('#wkOt'), [{ t: '路線' }, { t: '每晚幾班', n: 1 }, { t: '櫃封好後多久出發（分）', n: 1 }], R.otRt.map(r => [`${esc(r[0])} → ${esc(r[1])}`, fmt(r[2], 1), r[4] == null ? '—' : fmt(r[4])]));
+}
+
+/* ================= 其他三個分頁共用：期間 ================= */
+function period() {
+  const M = D.meta, w = M.windows.find(x => x.id === win) || M.windows[0];
+  const rows = D.nights.slice(-w.n), S = stats(rows);
+  $('#winNote').textContent = `${md(rows[0].d)} ～ ${md(rows[rows.length - 1].d)}，共 ${rows.length} 晚；平均只算其中 ${S.n} 個${S.normalOnly ? '一般平日' : '晚上'}`;
+  return { rows, S, R: D.rank[w.id] };
+}
+
+/* ================= 四個主題 ================= */
+function drawTopics() {
+  const { rows, S, R } = period();
   const tile = (lab, val, unit, ctx, to) => `<a class="card tile" href="#${to}"><div class="lab">${esc(lab)}</div><div class="val">${val}<small>${esc(unit)}</small></div><div class="ctx">${ctx}</div><div class="go">看明細 ›</div></a>`;
   $('#tiles').innerHTML =
-    tile('等待', fmt(wH), '小時／晚', `每晚 ${fmt(wCars)} 台車頭等了 1 小時以上`, 'secWait') +
-    tile('空車空櫃里程', fmt(eP, 1), '%', `每晚 ${wan(kmBox + kmBob)} 萬公里沒有載貨`, 'secEmpty') +
-    tile('晚出發', fmt(oP), '%', `每晚 ${fmt(oL)} 班晚 30 分以上；晚到 ${fmt(iP)}%`, 'secLate') +
-    tile('加班', fmt(ot), '班／晚', lag == null ? '' : `櫃封好後，一半要等 ${fmt(lag)} 分以上才出發`, 'secOt');
+    tile('等待', fmt(S.wH), '小時／晚', `每晚 ${fmt(S.wCars)} 台車頭等了 1 小時以上`, 'secWait') +
+    tile('空車空櫃里程', fmt(S.eP, 1), '%', `每晚 ${wan(S.kmBox + S.kmBob)} 萬公里沒有載貨`, 'secEmpty') +
+    tile('晚出發', fmt(S.oP), '%', `每晚 ${fmt(S.oL)} 班晚 30 分以上；晚到 ${fmt(S.iP)}%`, 'secLate') +
+    tile('加班', fmt(S.ot), '班／晚', S.lag == null ? '' : `櫃封好後，一半要等 ${fmt(S.lag)} 分以上才出發`, 'secOt');
 
   // ---- 等待 ----
-  $('#lWait').innerHTML = `一般平日每晚有 <b>${fmt(wCars)} 台</b>車頭在站內等了 1 小時以上，共 ${fmt(wN)} 次、合計 <b>${fmt(wH)} 小時</b>，平均一次等 ${fmt(wN ? wH * 60 / wN : 0)} 分。`;
-  bars($('#cWait'), rows, [{ color: 'var(--s1)', get: x => x.wMin / 60 }], { label: '每晚等待小時', avg: wH, avgText: fmt(wH) + ' 小時', tip: x => `等待 ${fmt(x.wMin / 60)} 小時<br>${fmt(x.wN)} 次、${fmt(x.wCars)} 台車頭` });
-  table($('#tWait'), [{ t: '站所' }, { t: '每晚等待（小時）', n: 1 }, { t: '每晚幾次', n: 1 }, { t: '平均一次（分）', n: 1 }], R.waitSt.map(r => [esc(r[0] + r[1]), fmt(r[2], 1), fmt(r[3], 1), fmt(r[4])]));
+  $('#lWait').innerHTML = `一般平日每晚有 <b>${fmt(S.wCars)} 台</b>車頭在站內等了 1 小時以上，共 ${fmt(S.wN)} 次、合計 <b>${fmt(S.wH)} 小時</b>。其中 <b>${fmt(pct(S.wBox, S.wH))}%</b> 是車到了、下一班的櫃還沒封好；${fmt(pct(S.wPlan, S.wH))}% 是櫃好了在等表定時間；<b>${fmt(pct(S.wLate, S.wH))}%</b>（${fmt(S.wLate)} 小時）是櫃好了、時間也到了還沒走。`;
+  bars($('#cWait'), rows, [{ color: 'var(--s1)', get: x => x.wBox / 60 }, { color: 'var(--s2)', get: x => x.wPlan / 60 }, { color: 'var(--s3)', get: x => x.wLate / 60 }], { label: '每晚等待小時', avg: S.wH, avgText: fmt(S.wH) + ' 小時', tip: x => `等待 ${fmt(x.wMin / 60)} 小時（${fmt(x.wN)} 次、${fmt(x.wCars)} 台）<br>等櫃 ${fmt(x.wBox / 60)} 小時<br>等表定時間 ${fmt(x.wPlan / 60)} 小時<br>該走了還沒走 ${fmt(x.wLate / 60)} 小時` });
+  table($('#tWait'), [{ t: '站所' }, { t: '每晚等待（小時）', n: 1 }, { t: '每晚幾次', n: 1 }, { t: '平均一次（分）', n: 1 }, { t: '等櫃占', n: 1 }, { t: '該走了還沒走占', n: 1 }], R.waitSt.map(r => [esc(r[0] + r[1]), fmt(r[2], 1), fmt(r[3], 1), fmt(r[4]), fmt(r[5]) + '%', fmt(r[6]) + '%']));
 
   // ---- 空車空櫃里程 ----
-  $('#lEmpty').innerHTML = `一般平日每晚跑 ${wan(kmAll)} 萬公里，其中 <b>${wan(kmBox + kmBob)} 萬公里（${fmt(eP, 1)}%）</b>沒有載貨：拉空櫃 ${wan(kmBox)} 萬、只有車頭 ${wan(kmBob)} 萬。`;
-  bars($('#cEmpty'), rows, [{ color: 'var(--s1)', get: x => x.kmBox / 10000 }, { color: 'var(--s2)', get: x => x.kmBob / 10000 }], { label: '每晚空車空櫃里程（萬公里）', axis: v => fmt(v, v < 1 && v > 0 ? 1 : 0) + ' 萬', avg: (kmBox + kmBob) / 10000, avgText: wan(kmBox + kmBob) + ' 萬公里', tip: x => `拉空櫃 ${wan(x.kmBox)} 萬公里<br>只有車頭 ${wan(x.kmBob)} 萬公里<br>占當晚里程 ${fmt(emptyPct(x), 1)}%` });
+  $('#lEmpty').innerHTML = `一般平日每晚跑 ${wan(S.kmAll)} 萬公里，其中 <b>${wan(S.kmBox + S.kmBob)} 萬公里（${fmt(S.eP, 1)}%）</b>沒有載貨：拉空櫃 ${wan(S.kmBox)} 萬、只有車頭 ${wan(S.kmBob)} 萬。`;
+  bars($('#cEmpty'), rows, [{ color: 'var(--s1)', get: x => x.kmBox / 10000 }, { color: 'var(--s2)', get: x => x.kmBob / 10000 }], { label: '每晚空車空櫃里程（萬公里）', axis: v => fmt(v, v < 1 && v > 0 ? 1 : 0) + ' 萬', avg: (S.kmBox + S.kmBob) / 10000, avgText: wan(S.kmBox + S.kmBob) + ' 萬公里', tip: x => `拉空櫃 ${wan(x.kmBox)} 萬公里<br>只有車頭 ${wan(x.kmBob)} 萬公里<br>占當晚里程 ${fmt(emptyPct(x), 1)}%` });
   table($('#tEmpty'), [{ t: '路段' }, { t: '類型' }, { t: '每晚幾趟', n: 1 }, { t: '每晚公里', n: 1 }, { t: '其中臨時加開', n: 1 }], R.emptyRt.map(r => [`${esc(r[0])} → ${esc(r[1])}`, r[2] === '空櫃' ? '拉空櫃' : '只有車頭', fmt(r[3], 1), fmt(r[4]), fmt(r[5]) + '%']));
 
   // ---- 準點 ----
-  $('#lLate').innerHTML = `一般平日每晚 ${fmt(oB)} 班有表定時間的班次裡，<b>${fmt(oL)} 班（${fmt(oP)}%）晚出發 30 分以上</b>，平均晚 ${fmt(oMin)} 分；晚到 30 分以上的占 ${fmt(iP)}%。`;
-  bars($('#cLate'), rows, [{ color: 'var(--s1)', get: x => pct(x.outLate, x.outBase) }], { label: '每晚晚出發的比例', axis: v => fmt(v) + '%', avg: oP, avgText: fmt(oP) + '%', tip: x => `晚出發 ${fmt(x.outLate)}／${fmt(x.outBase)} 班（${fmt(pct(x.outLate, x.outBase))}%）<br>晚到 ${fmt(x.inLate)}／${fmt(x.inBase)} 班（${fmt(pct(x.inLate, x.inBase))}%）` });
+  $('#lLate').innerHTML = `一般平日每晚 ${fmt(S.oB)} 班有表定時間的班次裡，<b>${fmt(S.oL)} 班（${fmt(S.oP)}%）晚出發 30 分以上</b>，平均晚 ${fmt(S.oMin)} 分；晚到 30 分以上的占 ${fmt(S.iP)}%。`;
+  bars($('#cLate'), rows, [{ color: 'var(--s1)', get: x => pct(x.outLate, x.outBase) }], { label: '每晚晚出發的比例', axis: v => fmt(v) + '%', avg: S.oP, avgText: fmt(S.oP) + '%', tip: x => `晚出發 ${fmt(x.outLate)}／${fmt(x.outBase)} 班（${fmt(pct(x.outLate, x.outBase))}%）<br>晚到 ${fmt(x.inLate)}／${fmt(x.inBase)} 班（${fmt(pct(x.inLate, x.inBase))}%）` });
   if (lateBy === 'st') table($('#tLate'), [{ t: '出發站' }, { t: '每晚出發（班）', n: 1 }, { t: '每晚晚出發（班）', n: 1 }, { t: '比例', n: 1 }, { t: '平均晚（分）', n: 1 }], R.lateSt.map(r => [esc(r[0] + r[1]), fmt(r[2], 1), fmt(r[3], 1), fmt(r[4]) + '%', fmt(r[5])]));
   else table($('#tLate'), [{ t: '班次' }, { t: '起迄' }, { t: '有跑的晚數', n: 1 }, { t: '晚出發的晚數', n: 1 }, { t: '比例', n: 1 }, { t: '平均晚（分）', n: 1 }], R.lateTrip.map(r => [`${esc(r[0])} ${esc(r[1])}`, `${esc(r[2])} → ${esc(r[3])}`, fmt(r[4]), fmt(r[5]), fmt(r[6]) + '%', fmt(r[7])]), '這段期間還不夠長，排不出班次。');
 
   // ---- 加班 ----
-  $('#lOt').innerHTML = `一般平日每晚 <b>${fmt(ot)} 班</b>加班、共 ${wan(otKm)} 萬公里。` + (lag == null ? '' : `櫃封好之後，一半的加班要等 <b>${fmt(lag)} 分</b>以上才出發；`) + `每晚有 ${fmt(na)} 個加班櫃超過 1 小時沒派到車。跑加班的車有 <b>${fmt(pct(moved, ot))}%</b> 是空車調來的（每晚為此多跑 ${fmt(movedKm)} 公里），${fmt(pct(local, ot))}% 是原本就停在那一站的車。`;
-  bars($('#cOt'), rows, [{ color: 'var(--s1)', get: x => x.ot }], { label: '每晚加班班數', avg: ot, avgText: fmt(ot) + ' 班', tip: x => `加班 ${fmt(x.ot)} 班、${fmt(x.otKm)} 公里<br>封櫃後 ${x.otLag == null ? '—' : fmt(x.otLag) + ' 分'}出發（中位數）<br>空車調來 ${fmt(x.otMoved)} 班、原地的車 ${fmt(x.otLocal)} 班<br>超過 1 小時沒派到車 ${fmt(x.noAssign)} 個櫃` });
-  table($('#tOt'), [{ t: '路線' }, { t: '每晚幾班', n: 1 }, { t: '每晚公里', n: 1 }, { t: '封櫃後多久出發（分）', n: 1 }, { t: '空車調來', n: 1 }], R.otRt.map(r => [`${esc(r[0])} → ${esc(r[1])}`, fmt(r[2], 1), fmt(r[3]), r[4] == null ? '—' : fmt(r[4]), fmt(r[5]) + '%']));
+  $('#lOt').innerHTML = `一般平日每晚 <b>${fmt(S.ot)} 班</b>加班、共 ${wan(S.otKm)} 萬公里。` + (S.lag == null ? '' : `櫃封好之後，一半的加班要等 <b>${fmt(S.lag)} 分</b>以上才出發；`) + `每晚有 ${fmt(S.na)} 個加班櫃超過 1 小時沒派到車。跑加班的車有 <b>${fmt(pct(S.moved, S.ot))}%</b> 是空車調來的（每晚為此多跑 ${fmt(S.movedKm)} 公里），${fmt(pct(S.local, S.ot))}% 是原本就停在那一站的車。`;
+  bars($('#cOt'), rows, [{ color: 'var(--s1)', get: x => x.ot }], { label: '每晚加班班數', avg: S.ot, avgText: fmt(S.ot) + ' 班', tip: x => `加班 ${fmt(x.ot)} 班、${fmt(x.otKm)} 公里<br>櫃封好後 ${x.otLag == null ? '—' : fmt(x.otLag) + ' 分'}出發（中位數）<br>空車調來 ${fmt(x.otMoved)} 班、原地的車 ${fmt(x.otLocal)} 班<br>超過 1 小時沒派到車 ${fmt(x.noAssign)} 個櫃` });
+  table($('#tOt'), [{ t: '路線' }, { t: '每晚幾班', n: 1 }, { t: '每晚公里', n: 1 }, { t: '櫃封好後多久出發（分）', n: 1 }, { t: '空車調來', n: 1 }], R.otRt.map(r => [`${esc(r[0])} → ${esc(r[1])}`, fmt(r[2], 1), fmt(r[3]), r[4] == null ? '—' : fmt(r[4]), fmt(r[5]) + '%']));
 
   // ---- 逐晚數字 ----
-  table($('#tNights'), [{ t: '日期' }, { t: '出車（台）', n: 1 }, { t: '里程（萬公里）', n: 1 }, { t: '等待（小時）', n: 1 }, { t: '等待的車頭（台）', n: 1 }, { t: '空車空櫃', n: 1 }, { t: '晚出發', n: 1 }, { t: '晚到', n: 1 }, { t: '加班（班）', n: 1 }, { t: '封櫃後多久出發', n: 1 }, { t: '沒派到車（櫃）', n: 1 }],
-    [...rows].reverse().map(x => Object.assign([`${x.d.slice(5).replace('-', '/')}（${WD[x.w]}）${x.normal ? '' : ' 不算一般平日'}`, fmt(x.ran), wan(x.km), fmt(x.wMin / 60), fmt(x.wCars), fmt(emptyPct(x), 1) + '%', fmt(pct(x.outLate, x.outBase)) + '%', fmt(pct(x.inLate, x.inBase)) + '%', fmt(x.ot), x.otLag == null ? '—' : fmt(x.otLag) + ' 分', fmt(x.noAssign)], { cls: x.normal ? '' : 'off' })));
+  table($('#tNights'), [{ t: '日期' }, { t: '出車（台）', n: 1 }, { t: '里程（萬公里）', n: 1 }, { t: '等待（小時）', n: 1 }, { t: '等待的車頭（台）', n: 1 }, { t: '空車空櫃', n: 1 }, { t: '晚出發', n: 1 }, { t: '晚到', n: 1 }, { t: '加班（班）', n: 1 }, { t: '櫃封好後多久出發', n: 1 }, { t: '沒派到車（櫃）', n: 1 }, { t: '公司警示（筆）', n: 1 }],
+    [...rows].reverse().map(x => Object.assign([`${md(x.d)}（${WD[x.w]}）${x.normal ? '' : ' 不算一般平日'}`, fmt(x.ran), wan(x.km), fmt(x.wMin / 60), fmt(x.wCars), fmt(emptyPct(x), 1) + '%', fmt(pct(x.outLate, x.outBase)) + '%', fmt(pct(x.inLate, x.inBase)) + '%', fmt(x.ot), x.otLag == null ? '—' : fmt(x.otLag) + ' 分', fmt(x.noAssign), fmt(x.warn)], { cls: x.normal ? '' : 'off' })));
+}
+
+/* ================= 改善機會 ================= */
+function drawOpp() {
+  const { rows, S, R } = period(), M = D.meta;
+  $('#lOpp').innerHTML = `一般平日每晚 ${fmt(S.ot)} 班加班裡，${fmt(S.local)} 班是原本就停在那一站的車接的，另外 <b>${fmt(S.non)} 班</b>是從別處調車或專程出車。這 ${fmt(S.non)} 班當中，有 <b>${fmt(S.near)} 班（${fmt(pct(S.near, S.non))}%）</b>在櫃封好到出發之間，同一站其實有別的車頭正在等；其中 <b>${f1(S.fit)} 班</b>，那台車的空檔夠跑一趟來回、再回來接自己的下一班（每晚合計 ${fmt(S.fitKm)} 公里的加班）。`;
+  bars($('#cOpp'), rows, [{ color: 'var(--s1)', get: x => x.otFit }, { color: 'var(--s2)', get: x => x.otNear - x.otFit }], { label: '每晚「同站有車在等」的加班班數', avg: S.near, avgText: fmt(S.near) + ' 班', tip: x => `另外調車的加班 ${fmt(x.otNon)} 班<br>當下同站有車在等 ${fmt(x.otNear)} 班<br>其中空檔夠來回 ${fmt(x.otFit)} 班（${fmt(x.otFitKm)} 公里）` });
+  table($('#tOpp'), [{ t: '加班的出發站' }, { t: '每晚另外調車的加班（班）', n: 1 }, { t: '當下同站有車在等（班）', n: 1 }, { t: '其中空檔夠來回（班）', n: 1 }], R.oppSt.map(r => [esc(r[0] + r[1]), fmt(r[2], 1), fmt(r[3], 1), fmt(r[4], 1)]));
+
+  const P = R.pairs, cars = new Set(P.map(r => r[2] + '|' + r[0])).size;
+  $('#lPair').innerHTML = P.length ? `這段期間 ${S.n} 個一般平日裡，有 ${R.pairsMin} 晚以上都接得上的組合共 <b>${P.length} 組</b>，牽涉 <b>${cars} 台</b>在固定時間等待的車頭。估算方式：來回公里 ÷ 時速 ${M.speed} 公里，加裝卸掛櫃 ${M.handle} 分，跑完還趕得上自己的下一班。` : `這段期間還找不到「一半以上的晚上都接得上」的固定組合。`;
+  let lastKey = '';
+  table($('#tPair'), [{ t: '站所' }, { t: '在等的車頭' }, { t: '車隊' }, { t: '平常幾點在等' }, { t: '可以順便跑的加班' }, { t: '單程（公里）', n: 1 }, { t: '來回約（分）', n: 1 }, { t: '接得上（晚）', n: 1 }],
+    P.map(r => { const k = r[0] + '|' + r[2], same = k === lastKey; lastKey = k; return [same ? '' : esc(r[0] + r[1]), same ? '' : `<b>${esc(r[2])}</b> ${esc(r[3])}`, same ? '' : esc(r[4]), same ? '' : `${esc(r[5])}–${esc(r[6])}`, `${esc(r[1])} → ${esc(r[7])}`, fmt(r[9]), fmt(r[10]), `${fmt(r[8])}／${S.n}`]; }),
+    '這段期間還找不到固定的組合。');
+}
+
+/* ================= 公司警示 ================= */
+function drawWarn() {
+  const { rows, S, R } = period();
+  const total = sum(rows, x => x.warn), reply = sum(rows, x => x.wReply);
+  const perAll = sum(R.warn, r => r[3]), chronic = perAll ? sum(R.warn, r => r[3] * r[6] / 100) / perAll * 100 : 0;
+  $('#lWarn').innerHTML = `公司「班次即時監控警示」一般平日每晚發出 <b>${fmt(S.warn)} 筆</b>警示。這段期間 ${rows.length} 晚共 ${fmt(total)} 筆，有人回覆的只有 <b>${fmt(reply)} 筆</b>。其中約 <b>${fmt(chronic)}%</b> 是「天天都在叫」的：同一個班次或車頭，${S.n} 個一般平日裡有 ${R.chronicN} 晚以上都被同一種警示叫到。這些多半是班表時間或設備本身的問題，修一次就能少掉一大批。`;
+  bars($('#cWarn'), rows, [{ color: 'var(--s1)', get: x => x.warn }], { label: '每晚警示筆數', avg: S.warn, avgText: fmt(S.warn) + ' 筆', tip: x => `警示 ${fmt(x.warn)} 筆<br>有人回覆 ${fmt(x.wReply)} 筆` });
+  table($('#tWarn'), [{ t: '主題' }, { t: '公司的警示名稱' }, { t: '標準', n: 1 }, { t: '每晚（筆）', n: 1 }, { t: '天天都叫的班次或車頭', n: 1 }, { t: '占這種警示', n: 1 }, { t: '例如', w: 1 }],
+    R.warn.map(r => [esc(r[0]), esc(r[1]), r[2] == null ? '—' : fmt(r[2]) + ' 分', fmt(r[3]), `${fmt(r[5])}／${fmt(r[4])}`, fmt(r[6]) + '%', esc(r[7].join('、'))]));
+  $('#warnNote').textContent = '「天天都叫的班次或車頭」那一欄：前面是天天都叫的個數，後面是這種警示叫過的全部個數。';
+}
+
+function draw() {
+  for (const [t, id] of [['week', 'pWeek'], ['topics', 'pTopics'], ['opp', 'pOpp'], ['warn', 'pWarn']]) $('#' + id).hidden = t !== tab;
+  $('#perBar').hidden = tab === 'week';
+  document.querySelectorAll('#tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.t === tab));
+  ({ week: drawWeek, topics: drawTopics, opp: drawOpp, warn: drawWarn })[tab]();
 }
 
 function boot(d) {
   D = d; const M = D.meta; win = M.windows[0].id;
   $('#hdr').innerHTML = `資料 ${esc(M.from)} ～ ${esc(M.to)}（${M.nights} 晚） · 產生時間 ${esc(M.built)} · 內部資料，請勿外傳`;
   $('#win').innerHTML = M.windows.map(w => `<button type="button" data-v="${w.id}" aria-pressed="${w.id === win}">${esc(w.label)}</button>`).join('');
+  // 每週清單：最新的在最上面；預設選「至少有 3 個一般平日」的最新一週
+  const weeks = {}; for (const x of D.nights) { const m = mondayOf(x.d); (weeks[m] = weeks[m] || []).push(x); }
+  const mons = Object.keys(weeks).sort().reverse(), last = D.nights[D.nights.length - 1].d;
+  $('#wk').innerHTML = mons.map(m => { const sun = addDays(m, 6); return `<option value="${m}">${md(m)}–${md(sun)}${last < sun ? `（到 ${md(last)}）` : ''}</option>`; }).join('');
+  wk = mons.find(m => weeks[m].filter(x => x.normal).length >= 3) || mons[0]; $('#wk').value = wk;
+  $('#wk').addEventListener('input', e => { wk = e.target.value; draw(); });
+  $('#btnPrint').addEventListener('click', () => print());
+  $('#tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; tab = b.dataset.t; draw(); });
   $('#win').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; win = b.dataset.v; document.querySelectorAll('#win button').forEach(x => x.setAttribute('aria-pressed', x === b)); draw(); });
   $('#lateBy').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; lateBy = b.dataset.v; document.querySelectorAll('#lateBy button').forEach(x => x.setAttribute('aria-pressed', x === b)); draw(); });
   draw();
   // 版面寬度變了（轉向、縮放視窗）就重畫圖，字才不會被縮小
-  let timer = 0, lastW = $('#cWait').clientWidth;
-  const onSize = () => { const w = $('#cWait').clientWidth; if (!w || w === lastW) return; lastW = w; clearTimeout(timer); timer = setTimeout(draw, 120); };
-  if (window.ResizeObserver) new ResizeObserver(onSize).observe($('#cWait')); else addEventListener('resize', onSize);
+  let timer = 0, lastW = document.querySelector('.wrap').clientWidth;
+  const onSize = () => { const w = document.querySelector('.wrap').clientWidth; if (!w || w === lastW) return; lastW = w; clearTimeout(timer); timer = setTimeout(draw, 120); };
+  if (window.ResizeObserver) new ResizeObserver(onSize).observe(document.querySelector('.wrap')); else addEventListener('resize', onSize);
 }
 
 /* ---------- 啟動：本機版直接用內嵌資料；線上版先驗通行碼再向後端取資料 ---------- */
