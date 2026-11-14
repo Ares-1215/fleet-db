@@ -109,7 +109,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 <div class="cols">
   <div class="card">
     <h2>現在閒著的車</h2>
-    <p class="hint">人車在站上、下一班還沒到時間的車頭：跑完一趟在等的，和已經報到還沒出車的。空檔越長排越前面。標「班表排的空檔」的要看車，不一定能派。</p>
+    <p class="hint">人車在站上、下一班還沒到時間的車頭：跑完一趟在等的，和已經報到還沒出車的。空檔越長排越前面；今晚已跑完的排後面，單向車收班後排最後（司機多半已回車行休息）。標「班表排的空檔」的要看車，不一定能派。出發前的單向車不列。</p>
     <div class="bar">
       <select id="iSt" aria-label="站所"></select>
       <label>至少還能空 <select id="iMin" aria-label="至少空多久"><option value="30" selected>30 分</option><option value="60">60 分</option><option value="90">90 分</option><option value="120">2 小時</option></select></label>
@@ -204,16 +204,19 @@ function draw() {
     tile('還沒派車的加班', fmt(D.pend.length), '班', g ? '（全部車隊合計）' : '櫃已封好、等車頭', '幫加班找車', 'secFind');
 
   // ---- 現在閒著的車 ----
+  const grpOf = t => t.st !== 'done' ? 0 : t.ow ? 2 : 1;       // 排序分組：0＝正在空檔裡（含已報到）、1＝今晚已跑完、2＝單向車已收班
   const minFree = +$('#iMin').value;
-  const inSt = T.filter(t => (t.st === 'stay' || t.st === 'done' || t.st === 'pre') && (t.free == null || t.free >= minFree));   // 選單上的台數要跟下面列出來的一致
+  // 出發前的單向車不列（晚上要連開 4～5 小時）；單向車收班後照列但標明、排最後
+  const inSt = T.filter(t => (t.st === 'stay' || t.st === 'done' || (t.st === 'pre' && !t.ow)) && (t.free == null || t.free >= minFree));   // 選單上的台數要跟下面列出來的一致
   const stCount = {}; inSt.forEach(t => stCount[t.at] = (stCount[t.at] || 0) + 1);
   fill($('#iSt'), '<option value="">全部站所</option>' + stOpts(Object.keys(stCount), c => `${c}${D.stName[c] || ''}（${stCount[c]}）`));
   const st = $('#iSt').value;
-  const idle = inSt.filter(t => (!st || t.at === st) && (t.free == null || t.free >= minFree)).sort((a, b) => (b.free ?? 1e6) - (a.free ?? 1e6) || (b.waited ?? 0) - (a.waited ?? 0));
+  const idle = inSt.filter(t => (!st || t.at === st) && (t.free == null || t.free >= minFree)).sort((a, b) => grpOf(a) - grpOf(b) || (b.free ?? 0) - (a.free ?? 0) || (b.waited ?? 0) - (a.waited ?? 0));
   $('#iCount').textContent = `共 ${idle.length} 台`;
-  const how = t => t.st === 'pre' ? `<span class="tag">還沒出車</span> <span class="sub2">${hm(t.since)} 報到</span>` : `已停 ${dur(t.waited)}` + (t.sched ? ' <span class="tag">班表排的空檔</span>' : '');
+  const coOf = t => t.co ? `<div class="sub2">${esc(t.co)}${t.dual ? '・雙駕駛' : ''}</div>` : '';
+  const how = t => t.st === 'done' ? `已停 ${dur(t.waited)} <span class="tag">${t.ow ? '單向車、已收班' : '已跑完'}</span>` : t.st === 'pre' ? `<span class="tag">還沒出車</span> <span class="sub2">${hm(t.since)} 報到</span>` : `已停 ${dur(t.waited)}` + (t.sched ? ' <span class="tag">班表排的空檔</span>' : '');
   table($('#idle'), [{ t: '車頭' }, { t: '司機' }, { t: '在哪一站' }, { t: '狀況' }, { t: '下一班' }, { t: '還能空', n: 1 }],
-    idle.map(t => [who(t), esc(t.drv), esc(t.atName), how(t), t.next ? `${hm(t.next.out)} ${esc(t.next.name)} <span class="sub2">${esc(t.next.fromName)}→${esc(t.next.toName)}</span>` : '<span class="tag">今晚沒班了</span>', t.free == null ? '—' : `<span class="big">${dur(t.free)}</span>`]),
+    idle.map(t => [who(t), esc(t.drv) + coOf(t), esc(t.atName), how(t), t.next ? `${hm(t.next.out)} ${esc(t.next.name)} <span class="sub2">${esc(t.next.fromName)}→${esc(t.next.toName)}</span>` : '<span class="tag">今晚沒班了</span>', t.free == null ? '—' : `<span class="big">${dur(t.free)}</span>`]),
     '目前沒有符合條件的車頭。');
 
   // ---- 加班找車 ----
@@ -224,7 +227,7 @@ function draw() {
     const C = [];
     for (const t of D.tractors) {             // 找車不受車隊篩選限制：別的車隊的車也可能最近
       let ready, atName, k;
-      if (t.st === 'stay' || t.st === 'done' || t.st === 'pre') { k = km(t.at, from); if (k == null) continue; ready = now + Math.round(k / SPEED * 60); atName = t.atName; }
+      if (t.st === 'stay' || t.st === 'done' || (t.st === 'pre' && !t.ow)) { k = km(t.at, from); if (k == null) continue; ready = now + Math.round(k / SPEED * 60); atName = t.atName; }
       else if (t.st === 'road' && t.at === from && t.eta != null && t.eta - now <= 40) { k = 0; ready = Math.max(now, t.eta); atName = `快到${t.atName}（${hm(t.eta)}）`; }
       else continue;
       if (k > maxKm) continue;                                           // 太遠的不考慮，空車開過來不划算
@@ -237,10 +240,10 @@ function draw() {
       C.push({ t, k, e: k > 0 && t.st !== 'road' && kmx(t.at, from).e, ready, atName, until, win, verdict });
     }
     const rank = { '夠': 0, '': 0, '有點趕': 1, '不夠': 2 };
-    C.sort((a, b) => rank[a.verdict] - rank[b.verdict] || a.k - b.k || (b.t.waited ?? 0) - (a.t.waited ?? 0));
+    C.sort((a, b) => (grpOf(a.t) === 2) - (grpOf(b.t) === 2) || rank[a.verdict] - rank[b.verdict] || a.k - b.k || (b.t.waited ?? 0) - (a.t.waited ?? 0));   // 單向車收班後排最後
     $('#fNote').textContent = (to ? (leg != null ? `這一趟${kmText(from, to)}` : '這兩站之間的公里數沒有資料') + '；' : '') + `${maxKm < 9999 ? maxKm + ' 公里內' : ''}找到 ${C.length} 台` + (C.some(x => x.e) ? '（「約」是估算的公里數）' : '');
     table($('#cand'), [{ t: '車頭' }, { t: '司機' }, { t: '現在在' }, { t: '空車過來', n: 1 }, { t: '最快幾點到' }, { t: '可以用到' }, { t: to ? '夠不夠跑' : '已停', n: !to }],
-      C.slice(0, 12).map(x => [who(x.t), esc(x.t.drv), esc(x.atName) + (x.t.st === 'pre' ? ' <span class="tag">還沒出車</span>' : x.t.sched ? ' <span class="tag">班表排的空檔</span>' : ''), x.k ? `${x.e ? '約 ' : ''}${x.k} 公里` : '<span class="tag">就在這站</span>', hm(x.ready), x.until == null ? '今晚沒班了' : `${hm(x.until)} <span class="sub2">${esc(x.t.next.name)}</span>`, to ? (x.verdict ? `<span class="tag ${x.verdict === '夠' ? '' : 'w'}">${x.verdict}</span>` : '—') : (x.t.st === 'pre' ? '—' : dur(x.t.waited))]),
+      C.slice(0, 12).map(x => [who(x.t), esc(x.t.drv) + (x.t.co ? `<div class="sub2">${esc(x.t.co)}${x.t.dual ? '・雙駕駛' : ''}</div>` : ''), esc(x.atName) + (x.t.st === 'pre' ? ' <span class="tag">還沒出車</span>' : x.t.st === 'done' ? ` <span class="tag">${x.t.ow ? '單向車、已收班' : '已跑完'}</span>` : x.t.sched ? ' <span class="tag">班表排的空檔</span>' : ''), x.k ? `${x.e ? '約 ' : ''}${x.k} 公里` : '<span class="tag">就在這站</span>', hm(x.ready), x.until == null ? '今晚沒班了' : `${hm(x.until)} <span class="sub2">${esc(x.t.next.name)}</span>`, to ? (x.verdict ? `<span class="tag ${x.verdict === '夠' ? '' : 'w'}">${x.verdict}</span>` : '—') : (x.t.st === 'pre' ? '—' : dur(x.t.waited))]),
       maxKm < 9999 ? `${maxKm} 公里內沒有空檔夠的車頭，可以把「最遠調車」放寬。` : '沒有空檔夠的車頭。');
   }
 
