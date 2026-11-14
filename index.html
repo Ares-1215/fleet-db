@@ -134,7 +134,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 <div class="cols3">
   <div class="card" id="secWait"><h2>中途該走了還沒走</h2><p class="hint">已經出過車、停在站內，超過下一班表定出發時間 30 分以上。</p><div id="aWait"></div></div>
   <div class="card" id="secOut"><h2>首班還沒出車</h2><p class="hint">還沒出車，超過首班表定出發時間 30 分以上（晚超過 3 小時的當作今晚不出車，不列）。</p><div id="aOut"></div></div>
-  <div class="card" id="secIn"><h2>會晚到</h2><p class="hint">在路上，預估比表定晚 30 分以上進站。</p><div id="aIn"></div></div>
+  <div class="card" id="secIn"><h2>會晚到</h2><p class="hint">在路上，公司系統預估的進站時間比表定晚 30 分以上。下面一行寫這一班表定幾點到、實際幾點才出發。</p><div id="aIn"></div></div>
 </div>
 </div>
 
@@ -256,9 +256,16 @@ function draw() {
     table(host.querySelector('table'), heads, show, emptyText);
   };
   const two = (a, b) => `${esc(a)}<div class="sub2">${esc(b)}</div>`;      // 班次名稱一行、起迄站一行，欄位才不會太寬
-  list($('#aWait'), aWait.map(t => [who(t), two(t.next.name, t.atName + '→' + t.next.toName), hm(t.next.planOut), `<span class="tag w">${dur(late(t))}</span>`]), [{ t: '車頭' }, { t: '下一班' }, { t: '表定' }, { t: '已晚', n: 1 }], '目前沒有。');
-  list($('#aOut'), aOut.map(t => [who(t), two(t.next.name, t.next.fromName + '→' + t.next.toName + (t.st === 'pre' ? '（已報到）' : '')), hm(t.next.planOut), `<span class="tag w">${dur(late(t))}</span>`]), [{ t: '車頭' }, { t: '首班' }, { t: '表定' }, { t: '已晚', n: 1 }], '目前沒有。');
-  list($('#aIn'), aIn.map(t => [who(t), two(t.last.name, '往' + t.atName), hm(t.eta), `<span class="tag w">${dur(t.lateIn)}</span>`]), [{ t: '車頭' }, { t: '班次' }, { t: '預估進站' }, { t: '會晚', n: 1 }], '目前沒有。');
+  // 為什麼晚：表定幾點到、實際幾點才離開起站（晚出發的話）、櫃幾點才封好（比表定出發還晚的話）
+  const whyLate = t => { const L = t.last, a = [`表定 ${hm(L.planIn)} 到`];
+    if (L.out != null && L.planOut != null && L.out - L.planOut >= 30) a.push(`${hm(L.out)} 才離開${L.from}`);
+    if (L.seal != null && L.planOut != null && L.seal - L.planOut >= 30) a.push(`櫃 ${hm(L.seal)} 才封好`);
+    return a.join('；'); };
+  const handLine = t => t.hand ? `<div class="sub2">交接：${esc(t.hand.id)} ${esc(t.hand.name)} 在${esc(t.atName)}等這個櫃</div>` : '';
+  const waitLine = t => t.wf ? `<div class="sub2">在等 ${esc(t.wf.id)} ${esc(t.wf.name)} 送櫃來` + (t.wf.moving ? (t.wf.eta == null ? '，已在路上' : t.wf.eta < now ? `，原本預估 ${hm(t.wf.eta)} 到、但還沒有進站紀錄` : `，預估 ${hm(t.wf.eta)} 到`) : `，那台還沒離開${esc(t.wf.fromName)}`) + '</div>' : '';
+  list($('#aWait'), aWait.map(t => [who(t), two(t.next.name, t.atName + '→' + t.next.toName) + waitLine(t), hm(t.next.planOut), `<span class="tag w">${dur(late(t))}</span>`]), [{ t: '車頭' }, { t: '下一班' }, { t: '表定' }, { t: '已晚', n: 1 }], '目前沒有。');
+  list($('#aOut'), aOut.map(t => [who(t), two(t.next.name, t.next.fromName + '→' + t.next.toName + (t.st === 'pre' ? '（已報到）' : '')) + waitLine(t), hm(t.next.planOut), `<span class="tag w">${dur(late(t))}</span>`]), [{ t: '車頭' }, { t: '首班' }, { t: '表定' }, { t: '已晚', n: 1 }], '目前沒有。');
+  list($('#aIn'), aIn.map(t => [who(t), `${esc(t.last.name)}<div class="sub2">往${esc(t.atName)}；${esc(whyLate(t))}</div>${handLine(t)}`, hm(t.eta), `<span class="tag w">${dur(t.lateIn)}</span>`]), [{ t: '車頭' }, { t: '班次' }, { t: '預估進站' }, { t: '會晚', n: 1 }], '目前沒有。');
 }
 
 /** 換上一份新資料：重建選單與待派加班，保留使用者原本選的東西 */
